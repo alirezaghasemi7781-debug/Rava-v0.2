@@ -4,6 +4,7 @@ import { POI, Narrative } from "../types";
 import { dbService } from "./dbService";
 import { supabase } from "./supabaseClient";
 import { GeoPoint } from "../utils/geoPoint";
+import { APP_CONFIG } from "../config";
 
 const CACHE_EXPIRY = 30 * 24 * 60 * 60 * 1000;
 
@@ -51,7 +52,6 @@ class PlaceServiceProvider {
     }
 
     if (cachedData) {
-      // console.log(`[Resilience] Serving ${placeId} from Local Cache`);
       return cachedData;
     }
 
@@ -92,7 +92,6 @@ class PlaceServiceProvider {
   }
 
   private transformCuratedToPOI(curated: any): Partial<POI> {
-    // استفاده از کلاس GeoPoint برای مدیریت امن انواع فرمت‌های مکانی (String WKT یا GeoJSON Object)
     const geo = GeoPoint.fromPostGIS(curated.location);
     
     return {
@@ -207,16 +206,22 @@ class PlaceServiceProvider {
 
   async getAIVibeCheck(reviews: any[]): Promise<string> {
     if (!reviews || reviews.length === 0) return "هنوز نظری ثبت نشده، بیا اولین ردپا رو تو بذار!";
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    
+    // اصلاح: استفاده از APP_CONFIG به جای process.env
+    const ai = new GoogleGenAI({ apiKey: APP_CONFIG.GOOGLE.GEMINI_API_KEY });
+    
     const reviewText = reviews.slice(0, 5).map(r => r.text || "").join("\n");
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash', // آپدیت مدل به نسخه پایدارتر
         contents: `تحلیلگر Vibe مکان (رهنما): این نظرات را بخوان و اتمسفر مکان را در یک پاراگراف کوتاه (حداکثر ۲ جمله) به زبان فارسی صمیمی خلاصه کن:\n\n${reviewText}`,
         config: { temperature: 0.7 }
       });
       return response.text || "جای باحالی به نظر میاد!";
-    } catch (e) { return "توریست‌ها حس مثبتی به اینجا دارن."; }
+    } catch (e) { 
+        console.warn("[AI] Vibe check failed:", e);
+        return "توریست‌ها حس مثبتی به اینجا دارن."; 
+    }
   }
 }
 

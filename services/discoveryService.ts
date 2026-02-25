@@ -8,9 +8,9 @@ export const discoveryService = {
    * جستجوی مکان‌های نزدیک کاربر بر اساس مختصات و مود (مکان‌های عمومی کش شده)
    */
   async searchNearby(lat: number, lng: number, radius: number = 5000, mood?: string): Promise<POI[]> {
-    // نکته مهم: ورودی RPC ما Lng, Lat است، اما GeoPoint برای ما این تبدیل را مدیریت می‌کند اگر نیاز باشد
-    // اما اینجا ما مقادیر خام را به RPC می‌فرستیم که انتظار دارد مختصات سواپ شده باشند.
-    // در فایل SQL فاز ۲، تابع search_nearby_places با ST_MakePoint(px_lng, px_lat) کار می‌کند.
+    // PostGIS: ST_MakePoint(longitude, latitude) — ترتیب صحیح است
+    // px_lat = عرض جغرافیایی (Latitude) | px_lng = طول جغرافیایی (Longitude)
+    // تابع SQL در دیتابیس از ST_MakePoint(px_lng, px_lat) استفاده می‌کند که استاندارد PostGIS است
     
     const { data, error } = await supabase.rpc('search_nearby_places', {
       px_lat: lat,
@@ -20,8 +20,8 @@ export const discoveryService = {
     });
 
     if (error) {
-      console.error('RPC Error:', error);
-      return [];
+      console.error('[DiscoveryService] searchNearby RPC failed:', error);
+      throw error; // caller باید بداند که خطا بوده
     }
 
     return (data || []).map((item: any) => ({
@@ -39,49 +39,82 @@ export const discoveryService = {
 
   /**
    * دریافت مکان‌های منتخب رهنما (Curated POIs) بر اساس نام شهر
-   * استراتژی: استفاده از Join برای استقلال از آیدی‌های هاردکد شده
+   * استراتژی اصلاح شده: استفاده از روش Two-Step Query برای اطمینان از صحت فیلتر
    */
   async getCuratedPlaces(cityName: string): Promise<POI[]> {
+    console.log(`[DiscoveryService] Fetching curated places for: ${cityName}`);
+
     try {
+      // مرحله ۱: دریافت ID شهر از destinations
+      // دلیل استفاده از این روش به جای join:
+      // در Supabase PostgREST، .eq('related_table.column', value) روی جداول
+      // join شده به درستی فیلتر نمی‌کند. روش دو مرحله‌ای ۱۰۰٪ قابل اطمینان است.
+      const { data: dest, error: destError } = await supabase
+        .from('destinations')
+        .select('id')
+        .eq('name', cityName)
+        .single();
+
+      if (destError || !dest) {
+        console.error(
+          `[DiscoveryService] City "${cityName}" not found in destinations table`,
+          destError
+        );
+        throw new Error(`City not found: ${cityName}`);
+      }
+
+      // مرحله ۲: گرفتن attractions آن شهر با destination_id
       const { data, error } = await supabase
         .from('attractions')
-        .select(`
-          place_id,
-          name,
-          location,
-          static_data,
-          assets,
-          is_premium,
-          destinations!inner(name)
-        `)
-        .eq('destinations.name', cityName);
+        .select('place_id, name, location, static_data, assets, is_premium')
+        .eq('destination_id', dest.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('[DiscoveryService] Failed to fetch attractions:', error);
+        throw error; // به لایه بالاتر (store) propagate کن
+      }
 
-      return (data || []).map((item: any) => {
-        // تبدیل فرمت PostGIS/GeoJSON به کلاس GeoPoint با استفاده از متد هوشمند جدید
+      const results: POI[] = [];
+
+      for (const item of data || []) {
         const geo = GeoPoint.fromPostGIS(item.location);
-        
-        // اگر مختصات نامعتبر باشد، این مکان را فیلتر می‌کنیم (در عمل با map شاید آیتم نال برگردد، اما اینجا دیفالت صفر می‌گذاریم)
-        // در یک پیاده‌سازی سخت‌گیرانه‌تر، باید filter(Boolean) انجام دهیم.
-        
-        return {
+
+        if (!geo) {
+          // لاگ برای دیباگ — این مکان بی‌صدا حذف می‌شود
+          console.warn(
+            `[DiscoveryService] Could not parse location for attraction: "${item.name}"`,
+            { raw_location: item.location }
+          );
+          continue; // این مکان را رد کن، بقیه را ادامه بده
+        }
+
+        results.push({
           id: item.place_id,
           name: item.name,
-          lat: geo?.lat || 0,
-          lng: geo?.lng || 0,
+          lat: geo.lat,
+          lng: geo.lng,
           category: item.static_data?.category || 'historical',
           description: item.static_data?.description_fa || '',
           address: item.static_data?.address || '',
           image: item.assets?.photos?.[0] || '',
           is_curated: true,
-          moodTags: item.is_premium ? ['Premium', 'Verified'] : []
-        };
-      }).filter(poi => poi.lat !== 0 && poi.lng !== 0); // حذف مکان‌های نامعتبر
+          // ساختار یکپارچه moodTags (هماهنگ با searchNearby)
+          moodTags: [
+            item.static_data?.category || 'historical',
+            ...(item.is_premium ? ['Premium'] : [])
+          ]
+        });
+      }
+
+      console.log(
+        `[DiscoveryService] Successfully loaded ${results.length} curated places for ${cityName}`
+      );
+      return results;
       
     } catch (e) {
-      console.error("[DiscoveryService] Failed to fetch curated places:", e);
-      return [];
+      // فقط لاگ کن و Rethrow کن تا هوک‌ها بتوانند وضعیت خطا را نمایش دهند
+      console.error("[DiscoveryService] Critical error in getCuratedPlaces:", e);
+      throw e;
     }
   }
 };

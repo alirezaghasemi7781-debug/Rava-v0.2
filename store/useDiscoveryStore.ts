@@ -11,7 +11,8 @@ interface DiscoveryState {
   isSearching: boolean;
   activeMood: string | null;
   showCurated: boolean;
-  lastFetchTime: number | null; // جدید: برای مدیریت انقضای کش و جلوگیری از ترافیک اضافی
+  lastFetchTime: number | null;
+  cachedCity: CityMode | null; // اضافه شده: برای ترک کردن شهری که دیتاش کش شده
   
   setActiveMood: (mood: string | null) => void;
   toggleShowCurated: () => void;
@@ -29,6 +30,7 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       activeMood: null,
       showCurated: true,
       lastFetchTime: null,
+      cachedCity: null,
 
       setActiveMood: (mood) => set({ activeMood: mood }),
       
@@ -37,29 +39,36 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       fetchCurated: async (city, force = false) => {
         if (!city) return;
 
-        const { curatedPlaces, lastFetchTime } = get();
+        const { curatedPlaces, lastFetchTime, cachedCity } = get();
         const CACHE_TTL = 24 * 60 * 60 * 1000; // ۲۴ ساعت اعتبار کش
         const isExpired = !lastFetchTime || (Date.now() - lastFetchTime > CACHE_TTL);
+        const isCityChanged = cachedCity !== city;
 
-        // گارد پرفورمنس: اگر دیتا داریم و منقضی نشده، ریکوئست نزن (مگر اینکه Force باشد)
-        if (curatedPlaces.length > 0 && !isExpired && !force) {
-          console.log("[Discovery] Using valid cached curated places.");
+        // گارد پرفورمنس: اگر دیتا داریم، منقضی نشده و شهر عوض نشده، ریکوئست نزن
+        if (curatedPlaces.length > 0 && !isExpired && !isCityChanged && !force) {
+          console.log(`[Discovery] Using valid cached curated places for ${city}.`);
           return;
         }
 
+        console.log(`[Discovery] Fetching curated places for ${city} (Expired: ${isExpired}, CityChanged: ${isCityChanged})`);
+
         try {
+          // پاک کردن دیتای قبلی اگر شهر عوض شده تا کاربر گیج نشود
+          if (isCityChanged) {
+            set({ curatedPlaces: [] });
+          }
+
           const places = await discoveryService.getCuratedPlaces(city);
           
-          // گارد پایداری: فقط اگر دیتای معتبر آمد، استیت را آپدیت کن
           if (places && places.length > 0) {
             set({ 
               curatedPlaces: places, 
-              lastFetchTime: Date.now() 
+              lastFetchTime: Date.now(),
+              cachedCity: city
             });
           }
         } catch (e) {
-          // استراتژی Fail-Safe: در صورت خطای شبکه، دیتای قبلی را حفظ کن
-          console.warn("[Discovery] Network failed. Preserving last known curated markers.");
+          console.warn("[Discovery] Network failed. Preserving last known curated markers.", e);
         }
       },
 
@@ -83,12 +92,13 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       setDiscoveredPlaces: (places) => set({ discoveredPlaces: places })
     }),
     {
-      name: 'rahnam-discovery-storage-v4',
+      name: 'rahnam-discovery-storage-v5', // ورژن استوریج را بالا بردم تا کش قبلی invalidate شود
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         curatedPlaces: state.curatedPlaces,
         showCurated: state.showCurated,
-        lastFetchTime: state.lastFetchTime
+        lastFetchTime: state.lastFetchTime,
+        cachedCity: state.cachedCity
       })
     }
   )
