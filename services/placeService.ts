@@ -36,17 +36,10 @@ class PlaceServiceProvider {
      });
   }
 
-  /**
-   * استراتژی هیبریدی و کشینگ هوشمند فاز ۴:
-   * ابتدا از IndexedDB می‌خواند، سپس در پس‌زمینه از Supabase بروزرسانی می‌کند.
-   */
   async fetchHybridDetails(placeId: string): Promise<Partial<POI>> {
     const localCacheKey = `curated_${placeId}`;
-    
-    // ۱. بررسی کش محلی (IndexedDB)
     const cachedData = await dbService.get(localCacheKey);
     
-    // اگر آنلاین هستیم، در پس‌زمینه دیتا را بروزرسانی کن (Revalidate)
     if (navigator.onLine) {
       this.refreshCuratedCache(placeId, localCacheKey).then();
     }
@@ -55,7 +48,6 @@ class PlaceServiceProvider {
       return cachedData;
     }
 
-    // ۲. اگر در کش نبود، مستقیم از سرور بگیر
     try {
       const { data: curated, error } = await supabase
         .from('attractions')
@@ -72,7 +64,6 @@ class PlaceServiceProvider {
       console.warn("Server Fetch Failed, trying Google fallback:", e);
     }
 
-    // ۳. Fallback نهایی به گوگل
     return this.fetchEssentials(placeId);
   }
 
@@ -101,7 +92,7 @@ class PlaceServiceProvider {
       lng: geo?.lng || 0,
       category: curated.static_data?.category || 'historical',
       description: curated.static_data?.description_fa || '',
-      image: curated.assets?.photos?.[0] || curated.assets?.icon_3d,
+      image: curated.assets?.photos?.[0] || curated.assets?.icon_3d, // عکس از دیتابیس خودمان می‌آید
       is_curated: true,
       narrative: curated.narratives?.[0] as Narrative
     };
@@ -116,7 +107,7 @@ class PlaceServiceProvider {
       const center = new google.maps.LatLng(lat, lng);
       
       const request = {
-        fields: ['displayName', 'location', 'formattedAddress', 'types', 'photos'],
+        fields: ['displayName', 'location', 'formattedAddress', 'types'],
         locationRestriction: { center, radius: 2000 },
         includedPrimaryTypes: this.mapMoodToGoogleTypes(mood),
         maxResultCount: 8,
@@ -132,7 +123,7 @@ class PlaceServiceProvider {
         lng: p.location?.lng() || 0,
         category: mood || p.types?.[0] || 'point_of_interest',
         description: p.formattedAddress,
-        image: p.photos?.[0]?.getURI({ maxWidth: 800 }),
+        image: undefined,
         isGooglePOI: true
       }));
     } catch (e) {
@@ -187,7 +178,7 @@ class PlaceServiceProvider {
 
     try {
       const place = new google.maps.places.Place({ id: placeId, requestedLanguage: 'fa' });
-      await place.fetchFields({ fields: ['rating', 'userRatingCount', 'priceLevel', 'regularOpeningHours', 'photos', 'reviews', 'editorialSummary'] });
+      await place.fetchFields({ fields: ['rating', 'userRatingCount', 'priceLevel', 'regularOpeningHours', 'reviews', 'editorialSummary'] });
 
       const fullData = {
         rating: place.rating,
@@ -196,24 +187,54 @@ class PlaceServiceProvider {
         openingHours: place.regularOpeningHours?.weekdayDescriptions,
         reviews: place.reviews,
         editorialSummary: place.editorialSummary?.text || place.editorialSummary,
-        image: place.photos?.[0]?.getURI({ maxWidth: 1200 })
       };
 
       await dbService.set(cacheKey, { data: fullData, updatedAt: Date.now() });
       return fullData;
     } catch (error) { return {}; }
   }
+  
+  /**
+   * تابع جدید و اختصاصی برای گرفتن عکس‌ها بر اساس تقاضا
+   * این تابع فقط زمانی فراخوانی می‌شود که کاربر روی دکمه «نمایش عکس‌ها» کلیک کند.
+   */
+  async fetchPlacePhotos(placeId: string): Promise<string[]> {
+    const cacheKey = `photos_v1_${placeId}`;
+    const cached = await dbService.get(cacheKey);
+    if (cached) return cached;
+
+    const isReady = await this.waitForGoogle();
+    if (!isReady) return [];
+
+    try {
+      const place = new google.maps.places.Place({ id: placeId });
+      // درخواست فقط برای فیلد photos (هزینه دارد)
+      await place.fetchFields({ fields: ['photos'] });
+
+      if (!place.photos || place.photos.length === 0) {
+        return [];
+      }
+
+      // تبدیل عکس‌ها به URL و ذخیره در کش
+      const photoUrls = place.photos.map((p: any) => p.getURI({ maxHeight: 800, maxWidth: 800 }));
+      await dbService.set(cacheKey, photoUrls);
+      return photoUrls;
+
+    } catch (error) {
+      console.error("[PlaceService] Failed to fetch photos:", error);
+      return [];
+    }
+  }
 
   async getAIVibeCheck(reviews: any[]): Promise<string> {
     if (!reviews || reviews.length === 0) return "هنوز نظری ثبت نشده، بیا اولین ردپا رو تو بذار!";
     
-    // اصلاح: استفاده از APP_CONFIG به جای process.env
     const ai = new GoogleGenAI({ apiKey: APP_CONFIG.GOOGLE.GEMINI_API_KEY });
     
     const reviewText = reviews.slice(0, 5).map(r => r.text || "").join("\n");
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-1.5-flash', // آپدیت مدل به نسخه پایدارتر
+        model: 'gemini-1.5-flash',
         contents: `تحلیلگر Vibe مکان (رهنما): این نظرات را بخوان و اتمسفر مکان را در یک پاراگراف کوتاه (حداکثر ۲ جمله) به زبان فارسی صمیمی خلاصه کن:\n\n${reviewText}`,
         config: { temperature: 0.7 }
       });
