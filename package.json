@@ -15,8 +15,7 @@
     "lucide-react": "^0.563.0",
     "framer-motion": "^12.29.0",
     "@google/genai": "^1.38.0",
-    "@vis.gl/react-google-maps": "1.1.0",
-    "@googlemaps/markerclusterer": "^2.6.2"
+    "@vis.gl/react-google-maps": "1.9.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

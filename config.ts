@@ -18,9 +18,8 @@ export const APP_CONFIG = {
     ANON_KEY: getEnv('VITE_SUPABASE_ANON_KEY', "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRobXNmZHVnb2pva3h0ZW1ucWR3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODY2MTAsImV4cCI6MjA4NTk2MjYxMH0.Vk2wJZ1JY25-ihO1NF_UNtIy5O2t6gwBI7Y5ieFxaV0")
   },
   GOOGLE: {
-    // کلیدهای گوگل مپ و جمینی
-    // در محیط پروداکشن حتما باید در فایل .env تنظیم شوند
-    MAPS_API_KEY: getEnv('VITE_GOOGLE_MAPS_API_KEY', "AIzaSyAp1ZS5sGFqVlPXXjJ-ecVMKn6Uhja7oKY"),
-    GEMINI_API_KEY: getEnv('VITE_GEMINI_API_KEY', "AIzaSyCMB0STLXWhD7J8u_JQuKWYN-ZPS_5op0o")
+    // Dedicated Vite env vars only — no embedded API key fallbacks.
+    MAPS_API_KEY: getEnv('VITE_GOOGLE_MAPS_API_KEY', ''),
+    GEMINI_API_KEY: getEnv('VITE_GEMINI_API_KEY', '')
   }
 };

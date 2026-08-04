@@ -30,18 +30,17 @@ const CuratedMarker = React.memo(({ poi, onClick }: {
     <AdvancedMarker 
       position={position} 
       onClick={onClick}
-      zIndex={1000} 
+      zIndex={1000}
+      anchorLeft="-50%"
+      anchorTop="-50%"
     >
-      <div 
-        className="relative cursor-pointer transition-transform active:scale-95 group"
-        style={{ transform: 'translate(-50%, -50%)' }} 
-      >
+      <div className="relative cursor-pointer transition-transform active:scale-95 group">
         <div className="bg-white p-1 rounded-full shadow-[0_0_30px_rgba(234,179,8,0.6)] border-2 border-yellow-500 group-hover:scale-110 transition-transform">
           <div className="bg-yellow-500 p-2 rounded-full">
              <Star size={18} className="text-black fill-current" />
           </div>
         </div>
-        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 glass px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000] pointer-events-none text-black">
+        <div className="absolute -bottom-8 start-1/2 -translate-x-1/2 glass px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000] pointer-events-none text-black">
            <span className="text-[10px] font-black">{poi.name}</span>
         </div>
       </div>
@@ -173,6 +172,13 @@ const MapController = () => {
 
 const GOOGLE_LIBRARIES: ("places" | "marker")[] = ['places', 'marker'];
 
+/** Rollback: if quarterly misbehaves after a mid-quarter Google roll, set version to a numbered pin (e.g. "3.64" or "3.65"). */
+const MAPS_JS_VERSION = 'quarterly';
+
+const handleMapsApiError = (error: unknown) => {
+  console.error('[MainMap] Google Maps JavaScript API failed to load:', error);
+};
+
 export const MainMap: React.FC = () => {
   const { curatedPlaces, showCurated } = useDiscoveryStore();
   const { nearbyFootprints, pendingFootprints, userLocation, setActivePOI, setFullDetailPOI } = useMapStore();
@@ -192,7 +198,12 @@ export const MainMap: React.FC = () => {
 
   return (
     <div className="w-full h-full relative map-container">
-      <APIProvider apiKey={APP_CONFIG.GOOGLE.MAPS_API_KEY} libraries={GOOGLE_LIBRARIES}>
+      <APIProvider
+        apiKey={APP_CONFIG.GOOGLE.MAPS_API_KEY}
+        libraries={GOOGLE_LIBRARIES}
+        version={MAPS_JS_VERSION}
+        onError={handleMapsApiError}
+      >
         <GoogleMap
           defaultCenter={{ lat: 41.0082, lng: 28.9784 }}
           defaultZoom={13}

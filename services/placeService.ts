@@ -18,22 +18,35 @@ class PlaceServiceProvider {
   }
 
   async waitForGoogle(): Promise<boolean> {
-     if (typeof google !== 'undefined' && google.maps && google.maps.places) return true;
-     
-     return new Promise(resolve => {
-        let attempts = 0;
-        const interval = setInterval(() => {
-           attempts++;
-           if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+    try {
+      if (typeof google === 'undefined' || !google.maps) {
+        const mapsReady = await new Promise<boolean>((resolve) => {
+          let attempts = 0;
+          const interval = setInterval(() => {
+            attempts++;
+            if (typeof google !== 'undefined' && google.maps) {
               clearInterval(interval);
               resolve(true);
-           }
-           if (attempts > 30) {
+            } else if (attempts > 50) {
               clearInterval(interval);
               resolve(false);
-           }
-        }, 100);
-     });
+            }
+          }, 100);
+        });
+        if (!mapsReady) {
+          console.error('[PlaceService] Google Maps JS not available');
+          return false;
+        }
+      }
+
+      if (google.maps.places) return true;
+
+      await google.maps.importLibrary('places');
+      return !!google.maps.places;
+    } catch (e) {
+      console.error('[PlaceService] Places library failed to load:', e);
+      return false;
+    }
   }
 
   async fetchHybridDetails(placeId: string): Promise<Partial<POI>> {
@@ -165,7 +178,10 @@ class PlaceServiceProvider {
 
       await dbService.set(cacheKey, { data, updatedAt: Date.now() });
       return data;
-    } catch (error) { return {}; }
+    } catch (error) {
+      console.error('[PlaceService] fetchEssentials failed:', error);
+      return {};
+    }
   }
 
   async fetchFullDetails(placeId: string): Promise<Partial<POI>> {
@@ -191,7 +207,10 @@ class PlaceServiceProvider {
 
       await dbService.set(cacheKey, { data: fullData, updatedAt: Date.now() });
       return fullData;
-    } catch (error) { return {}; }
+    } catch (error) {
+      console.error('[PlaceService] fetchFullDetails failed:', error);
+      return {};
+    }
   }
   
   /**
