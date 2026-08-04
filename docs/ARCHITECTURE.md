@@ -1,235 +1,474 @@
-# ARCHITECTURE.md — System Anchor
+# ARCHITECTURE.md — System Architecture Anchor
 
-**Phase:** Maps platform upgrade readiness  
-**Review date:** 2026-08-04  
-**Scope note:** Existing product. Do not redraw the entire repository tree. Document organization rules, data flow, and files touched by the maps upgrade.
-
----
-
-## 0. Localization & RTL Architecture (Mandatory)
-
-### Product requirement
-- **Primary UI language:** Persian (Farsi).
-- **Layout direction:** Full RTL across the application.
-- **LTR allowed only for:** code, URLs, email addresses, phone numbers, and numeric identifiers — each wrapped/isolated, never as a default page layout.
-
-### Current implementation anchors
-| Concern | Location / pattern |
-| --- | --- |
-| Document RTL root | `index.html`: `<html lang="fa" dir="rtl">` |
-| Persian typography | `index.html`: Vazirmatn font; body defaults |
-| Page text direction | Widespread `text-right` on pages/components (e.g. `Dashboard`, `Explore`, `POIController`) |
-| Places API language | `placeService.ts`: `requestedLanguage: 'fa'` on Place requests |
-| Map chrome | `MapControls.tsx`: left-side floating controls — must remain usable in RTL context (verify positioning after any map upgrade) |
-
-### RTL review scope (any UI-touching task)
-When modifying components, verify:
-- **Layouts:** flex/grid direction, absolute positioning, safe-area padding
-- **Components:** modals, sheets, cards, toasts, map overlays, POI panels
-- **Forms:** label/input alignment, validation messages, keyboard flow
-- **Navigation:** tab bar, back buttons, drawer open direction
-- **Typography:** Persian copy alignment, line height, truncation
-- **Spacing:** margin/padding that should mirror under RTL
-- **Icons:** directional icons (arrows, chevrons, navigation) mirrored or semantically correct for RTL
-- **Directional interactions:** swipe gestures, slide-in animations, tooltip placement
-
-### Architectural decisions
-1. Persian copy is the default for all new user-facing strings.
-2. Root `dir="rtl"` is authoritative; nested `dir="ltr"` only for allowed technical exceptions.
-3. Maps upgrade work must not regress RTL on map-adjacent UI (`MapControls`, marker tooltips, POI sheets).
-4. Google Maps map canvas is inherently neutral; surrounding chrome and labels remain Persian/RTL.
+**Product:** رهنما (Rava / Rahnam)  
+**Document type:** Enduring system architecture reference  
+**Last architecture review:** 2026-08-04  
+**Scope note:** Existing product. Document organization rules, data flows, and verified modules. Do not redraw the entire repository tree.
 
 ---
 
-## 1. Current Maps Reality (Investigation Verdict)
+## System Overview
 
-### What the codebase already is
-- **Maps JavaScript API v3** via `@vis.gl/react-google-maps` (`APIProvider` loads the API).
-- **Advanced Markers** with cloud map styling (`mapId="8e589146f4837837"`).
-- **Places (New)** in `services/placeService.ts` (`Place`, `fetchFields`, `Place.searchNearby`, `importLibrary("places")`).
-- Map UI shell: `components/map/MainMap.tsx` + `components/map/MapControls.tsx`.
-- Map state: `store/useMapStore.ts`; curated layer: `store/useDiscoveryStore.ts` + `services/discoveryService.ts`.
-- POI UX: `components/poi/POIController.tsx` (hybrid curated + Google details).
-- Host surface: `pages/Dashboard.tsx` always mounts `MainMap` under the home tab.
+رهنما is a Vite-bundled React SPA that runs primarily as a mobile web client.
 
-### What is NOT in scope as a “v2→v3 rewrite”
-Maps JS API v2 has been dead since 2021. No `GMap2` / v2 script tags exist. Treating this as a v2 migration would waste effort and risk regressions for premium users.
+**Runtime collaborators**
+1. **Browser UI** — React 19 tree rooted at `index.tsx` → `App.tsx` → `AuthGuard` → `Dashboard` (or auth/onboarding).
+2. **Zustand stores** — Client state for auth, user wallet/trips, UI chrome, map/POI, discovery, missions, survival tools.
+3. **Service layer** — Supabase client, PlaceService, discoveryService, dbService/syncManager, AudioGraph, AI helpers, footprint/storage/survival utilities.
+4. **Google Maps JS v3** — Loaded once via `@vis.gl/react-google-maps` `APIProvider` inside `MainMap`.
+5. **Google Places (New)** — Essentials, full details, photos, nearby fallback.
+6. **Google Gemini** — Live voice agent (`useGeminiLive`) and occasional vibe summarization (`PlaceService.getAIVibeCheck`); Edge Functions also call Gemini server-side.
+7. **Supabase** — Auth, Postgres/PostGIS, RPC, Realtime profile updates, Storage (avatars, tickets, narratives, price proofs), Edge Functions.
+8. **IndexedDB** — Local place payload cache and durable offline outbox (`dbService`).
 
-### What IS the upgrade
-| Gap | Evidence | Decision |
+There is **no React Router**. Navigation is tab state (`useUIStore.activeTab`) inside a persistent map shell.
+
+---
+
+## Architectural Style
+
+Verified style: **component-based SPA with a service layer and Zustand state management**, plus **hybrid client/server data** (curated Supabase content + live Google APIs + Gemini).
+
+Not claimed (unsupported by repo structure): microservices frontend, Redux, Clean Architecture folders beyond practical layers, or GraphQL.
+
+---
+
+## Major Modules and Responsibilities
+
+### App shell & auth
+| Module | Responsibility | Must not | Depends on | Public points |
+| --- | --- | --- | --- | --- |
+| `App.tsx` | Boot auth, sync manager, online listeners; render `AuthGuard` | Map loading | `useAuthStore`, `useUserStore`, `syncManager` | Default export |
+| `features/auth/AuthGuard.tsx` | Route by session / onboarding / active trip | Places I/O | auth + user stores, pages | `AuthGuard` |
+| `features/auth/*` | Email/password auth UI steps | Map state | `useAuthStore` | `AuthScreen`, steps |
+| `pages/Onboarding.tsx` | City / vibe / crew onboarding | Maps API | `useAuthStore` | `Onboarding` |
+
+### Dashboard & pages
+| Module | Responsibility | Must not | Depends on | Public points |
+| --- | --- | --- | --- | --- |
+| `pages/Dashboard.tsx` | Host `MainMap`, tab overlays, MagicButton, vision, POI | Own Places protocol | UI store, map/poi/voice components | `Dashboard` |
+| `pages/Explore.tsx` | Mood discovery feed | Direct Maps script | discovery + map stores | `Explore` |
+| `pages/MyTrip.tsx` | Trip timeline / ticket scanner entry | Auth protocol | `useUserStore` | `MyTrip` |
+| `pages/Tools.tsx` | Survival toolkit surface | Gemini Live | survival components/store | `Tools` |
+| `pages/Profile.tsx` | Passport / actions / settings entry | Outbox processing | profile components | `Profile` |
+
+### Map & POI
+| Module | Responsibility | Must not | Depends on | Public points |
+| --- | --- | --- | --- | --- |
+| `components/map/MainMap.tsx` | Sole `APIProvider` owner; markers; MapController | Auth flows | map/discovery/user stores, PlaceService, GeoPoint | `MainMap` |
+| `components/map/MapControls.tsx` | Curated layer toggle, recenter | Places fetch | discovery/map stores, `useMap` | `MapControls` |
+| `components/poi/POIController.tsx` | POI sheet UX, expand, narrative, stamp attempt | Own Google field lists | map/user stores, PlaceService, AudioGraph | `POIController` |
+| `components/tools/SubwayMap.tsx` | Static subway overlay imagery | Google Maps JS | survival store | `SubwayMap` |
+
+### Services
+| Module | Responsibility | Must not | Depends on | Public points |
+| --- | --- | --- | --- | --- |
+| `services/supabaseClient.ts` | Single Supabase client | UI | `config.ts` | `supabase` |
+| `services/placeService.ts` | Hybrid curated + Google Places + vibe AI | JSX | Google, Supabase, dbService, GeoPoint, GenAI | `PlaceService` |
+| `services/discoveryService.ts` | RPCs `search_nearby_places`, `get_city_attractions` | Google Places | Supabase | `discoveryService` |
+| `services/dbService.ts` | IndexedDB places + outbox | React | browser IndexedDB | `dbService` |
+| `services/syncManager.ts` | Replay outbox when online | UI rendering | dbService, supabase, user store | `syncManager` |
+| `services/audioGraph.ts` | Mic VAD, live PCM playback, narrative files, SFX | Network business rules | Web Audio | `AudioGraph` |
+| `services/ai/edgeService.ts` | Invoke Edge Functions | Map markers | supabase | `edgeService` |
+| `services/ai/chatLogger.ts` | Fire-and-forget chat log insert | Blocking UX | supabase | `chatLogger` |
+| `services/social/footprintService.ts` | Nearby footprints RPC + insert | Map React tree | supabase | `footprintService` |
+| `services/storageService.ts` | Avatar upload | Auth UI | supabase storage | `storageService` |
+| `services/survival/*` | Currency rates helper, TTS | Maps | browser APIs | exports |
+
+### State stores (`store/`)
+| Store | Owns | Persistence |
 | --- | --- | --- |
-| React Maps library ~2 years behind | `package.json` + `index.html` importmap pin `1.1.0`; npm latest **1.9.0** (2026-07-03) | Upgrade wrapper in lockstep in both places |
-| No Maps release channel pin | `APIProvider` has no `version`/`channel` | Production: pin **`quarterly`** for predictability; allow temporary numbered rollback |
-| Manual marker CSS translate | `MainMap` CuratedMarker uses `style={{ transform: 'translate(-50%, -50%)' }}` | After ≥1.6.0, prefer `anchorLeft` / `anchorTop` (Maps JS ≥3.62) |
-| Dead clustering dependency | `@googlemaps/markerclusterer` unused | Remove dependency unless clustering is scheduled immediately after upgrade |
-| Key hygiene | Fallback keys embedded in `config.ts` | Document restriction; do not expand; prefer env-only in production ops |
+| `useAuthStore` | Session/user flags, onboarding, semantic profile mutations | localStorage (partial; session excluded) |
+| `useUserStore` | City, wallet, trips, favorites, stamps, sync, online | localStorage (partial) |
+| `useUIStore` | Tabs, voice/vision chrome, captions, rewards | Memory only |
+| `useMapStore` | User location, active/full POI, footprints pending, stamp celebration | Memory only |
+| `useDiscoveryStore` | Curated + discovered POIs, mood, curated visibility | localStorage (curated cache fields) |
+| `useMissionStore` | Photo missions | Memory only |
+| `useSurvivalStore` | FX rates, flashcards, subway fullscreen, currency | localStorage |
+| `useAppStore.ts` | Empty legacy stub after split | N/A |
 
-### Solution evaluation (upgrade strategy)
+### Voice & vision
+| Module | Responsibility |
+| --- | --- |
+| `hooks/useGeminiLive.ts` | Gemini Live session, tools (`search_nearby`, context, preferences), fuel metering |
+| `components/voice/MagicButton*` | Voice UI controls |
+| `components/camera/VisionOverlay.tsx` | Camera frame send into live session |
 
-**Problem:** Bring maps stack current without harming hundreds of premium users.
-
-| Option | Pros | Cons | Verdict |
-| --- | --- | --- | --- |
-| A. Ignore wrapper; only change Google Cloud console | Zero code risk short-term | Leaves known bugs/missing APIs; channel still uncontrolled | Reject |
-| B. Jump to 1.9.0 + weekly channel + all marker/Places edits in one PR | Fast | Hard to bisect; weekly can break mid-week | Reject for production |
-| C. Staged: inventory → dual pin (npm + importmap) to 1.9.0 → pin `quarterly` + `onError` → marker anchors → Places load hygiene → dead-dep cleanup → smoke matrix | Bisectable; reversible via version pin; matches existing architecture | Slightly longer | **Select** |
+### Config & shared types
+| Module | Responsibility |
+| --- | --- |
+| `config.ts` | `APP_CONFIG` from `VITE_*` with fallbacks |
+| `types.ts` | Shared domain TypeScript contracts |
+| `constants.ts` | Subway stations, flashcards, agent `SYSTEM_INSTRUCTION` |
+| `utils/geoPoint.ts` | Coordinate boundary object |
+| `utils/geoUtils.ts` | Haversine / radius checks (stamping) |
 
 ---
 
-## 2. Database Schema (Maps-relevant + core)
+## Data Flow
 
-Source of truth excerpts: `supabase/code/database_schema.txt` and later RPC/attraction layers. Coordinate rule is non-negotiable.
+### Boot
+1. `index.tsx` mounts `App`.
+2. `initializeAuth()` subscribes to Supabase auth; hydrates persisted auth flags.
+3. `syncManager.init()` registers `online` → outbox processing.
+4. When `user` exists: `subscribeToUpdates()` (Realtime `profiles`) + `syncWithCloud()`.
+5. `AuthGuard` chooses Auth / Onboarding / Dashboard.
 
-### Global rule
-- PostGIS / GEOGRAPHY: **`(longitude, latitude)`**
-- Google Maps / app UI / Zustand: **`(latitude, longitude)`**
-- Conversion: only via `utils/geoPoint.ts`
+### Tab UI
+1. User taps `BottomBar` → `useUIStore.setActiveTab`.
+2. `Dashboard` keeps `MainMap` mounted; non-home tabs overlay blurred content.
+3. Home shows MagicButton + camera entry; `POIController` is always mounted for sheets.
 
-### Core tables (summary)
+### Map boot & interaction
+1. `MainMap` → `APIProvider` (libraries `places`, `marker`) → `Map` with `mapId`, dark scheme, greedy gestures.
+2. `MapController`:
+   - Defaults `cityMode` to Istanbul if unset.
+   - Listens to native map `click` with `placeId` → `PlaceService.fetchEssentials` → `setActivePOI`.
+   - On city change: `fetchCurated(city)` + pan/zoom (Istanbul center vs Dubai center for non-Istanbul).
+   - Geolocation watch → `setUserLocation([lat, lng])`.
+3. Markers: curated (`useDiscoveryStore`), footprints (`nearby` + `pending`), user pulse AdvancedMarker.
+4. Curated marker click → `setActivePOI` without Google essentials fetch.
+
+### Discovery feed
+```
+Explore mood / location
+        │
+        ▼
+discoveryService.searchNearby (Supabase RPC)
+        │ empty
+        ▼
+PlaceService.fetchNearbyFallback (Places New)
+        │
+        ▼
+useDiscoveryStore.discoveredPlaces → VibeCard list
+```
+
+### POI expand (hybrid)
+```
+POIController.handleExpand
+   ├─ PlaceService.fetchHybridDetails (IndexedDB → attractions+narratives → essentials fallback)
+   └─ PlaceService.fetchFullDetails (Places New ratings/hours/reviews)
+        │
+        ▼
+Merge into fullDetailPOI; curated description OR Gemini vibe summary
+        │
+        ▼
+Optional stamp if within 150m + not already stamped
+```
+
+### Voice agent
+```
+MagicButton → useGeminiLive.connect
+   → AudioGraph mic PCM → Gemini Live
+   → tool search_nearby → discoveryService → discovery store
+   → fuel deduct via outbox on disconnect
+```
+
+### Offline write path
+```
+Optimistic UI / action
+   → dbService.pushToOutbox
+   → syncManager.processOutbox (online)
+   → Supabase RPC/table insert
+   → syncWithCloud refresh
+```
+
+### Error / fallback paths
+- Google not ready: essentials may show Persian connection error name; nearby fallback returns `[]`.
+- Discovery network fail: preserve last curated markers; explore logs error.
+- Auth errors: Persian messages via `AuthResult`.
+- Zero fuel: alert blocks Live connect.
+
+---
+
+## API and Integration Routing
+
+### Supabase Auth
+- **Entry:** `useAuthStore.initializeAuth` / login / signUp / signOut
+- **Adapter:** `services/supabaseClient.ts`
+- **Config:** `APP_CONFIG.SUPABASE` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`)
+- **Flow:** Session in localStorage; `AuthGuard` consumes user + onboarding metadata
+- **Errors:** Mapped Persian `AuthResult`; splash until hydrated + initialized
+- **Ownership:** Auth session owned by Supabase; semantic profile mirrored to `profiles`
+
+### Google Maps JavaScript API
+- **Entry:** `MainMap` `APIProvider`
+- **Config:** `APP_CONFIG.GOOGLE.MAPS_API_KEY`
+- **Flow:** Provider loads API → Map + AdvancedMarkers + native listeners
+- **Errors:** No dedicated `onError` on provider yet (upgrade initiative)
+- **Ownership:** Map UI state in Zustand; tiles/API from Google
+
+### Google Places (New)
+- **Entry:** `PlaceService` methods
+- **Flow:** `waitForGoogle` / `importLibrary("places")` → `Place` + `fetchFields` / `searchNearby`
+- **Language:** `requestedLanguage: 'fa'` on essentials/full details
+- **Errors:** Empty objects / arrays; console errors on nearby/photo failures
+- **Ownership:** Cached copies in IndexedDB; source of truth for non-curated fields is Google
+
+### Supabase data / RPC
+- **Discovery:** `search_nearby_places`, `get_city_attractions`
+- **Footprints:** `get_nearby_footprints`; insert into `footprints`
+- **Wallet:** `deduct_fuel`, `process_poi_visit`, `claim_referral` (and related SQL functions)
+- **Tables read/written from client:** `profiles`, `trips`, `stamps`, `favorites`, `reward_ledger`, `attractions`, `chat_logs`, `footprints`, etc.
+- **Realtime:** `profiles` UPDATE for wallet/XP toast
+
+### Gemini / GenAI
+- **Client Live:** `useGeminiLive` via `@google/genai` + `APP_CONFIG.GOOGLE.GEMINI_API_KEY` (also checks `process.env.API_KEY`)
+- **Client text:** `PlaceService.getAIVibeCheck` (`gemini-1.5-flash`)
+- **Edge:** `process-ticket`, `verify-price`, `the-dreamer` use server `GEMINI_API_KEY`
+
+### Storage
+- Avatars bucket via `storageService`
+- Narratives public URLs consumed by AudioGraph / SW cache strategy (SW file present)
+- Tickets / price_proofs used by Edge Functions
+
+### Unsplash
+- Optional image URLs in curated assets; `POIController` optimizes Unsplash query params
+
+---
+
+## Database Schema
+
+Sources of truth in-repo: `supabase/code/database_schema.txt`, `supabase/code/sql/frozen_memory_schema_v1.sql`, plus later SQL under `supabase/code/` (stamps, reward_ledger, favorites, chat_logs, RLS patches). **Live remote schema may include migrations beyond these files; treat SQL files as confirmed design docs, not a guarantee of deployment parity.**
+
+### Global coordinate rule
+- PostGIS: `(lng, lat)`
+- App/Google: `(lat, lng)`
+- Convert only via `GeoPoint`
+
+### Core tables (from `database_schema.txt`)
 
 #### `profiles`
 - `id` UUID PK → `auth.users`
 - `username` TEXT UNIQUE
-- `wallet_balance` DECIMAL (AI hours; UI may show minutes ×60)
-- `xp_level` INTEGER, `reputation_score` INTEGER
-- `current_city` TEXT CHECK (`Istanbul` \| `Dubai` \| `Tehran`)
-- `preferences` JSONB
-- `created_at` timestamptz
+- `wallet_balance` DECIMAL (AI hours; UI minutes × 60)
+- `xp_level`, `reputation_score`
+- `current_city` CHECK (`Istanbul` | `Dubai` | `Tehran`)
+- `preferences` JSONB (legacy name in base schema; runtime also uses `semantic_profile` via later migrations)
+- `created_at`
+
+Later migrations (confirmed in SQL files / client usage): `semantic_profile`, `referral_code`, `referred_by`, and related indexes.
 
 #### `places_cache`
-- `place_id` TEXT PK (Google Place ID)
-- `name` TEXT NOT NULL
-- `location` GEOGRAPHY(POINT, 4326) NOT NULL
-- `category` TEXT, `google_types` TEXT[]
-- `address`, `phone`, `opening_hours` JSONB
-- `google_photo_refs` JSONB[], `crowd_photos` JSONB[]
-- `vibe_summary` TEXT, `last_ai_analysis` timestamptz
-- `updated_at` timestamptz  
-- **Business rule:** Lazy refresh — if older than ~30 days, re-fetch Google essentials.
+- Google Place ID PK, GEOGRAPHY location, category/types, address/phone/hours, photo refs, vibe_summary, lazy refresh ~30 days
 
 #### `footprints`
-- `id` UUID PK
-- `user_id` → `profiles`
-- `place_id` → `places_cache`
-- `location` GEOGRAPHY(POINT, 4326)
-- `content`, `mood`, `upvotes`, `is_verified`, `created_at`
+- User + optional place_id, GEOGRAPHY, content, mood, upvotes, `is_verified`
 
-#### `price_reports`, `trips`
-- Location-bearing contribution / itinerary entities; not direct Maps JS API objects.
+#### `trips`
+- Typed itinerary events with GEOGRAPHY, timing, JSON details, status
 
-#### Curated attractions layer (runtime)
-- Discovery uses RPC `get_city_attractions` / table `attractions` + `narratives` (see `discoveryService` / `PlaceService.fetchHybridDetails`).
-- Curated markers on the map are **not** Google Nearby results; they are first-party data with optional Google Place ID linkage.
+#### `price_reports`
+- Contribution reports with AI verification fields
 
----
+### Frozen memory layer (from `frozen_memory_schema_v1.sql`)
 
-## 3. API Routing & Data Flow
+#### `destinations`
+- City packages: name, center GEOGRAPHY, `manifest_version`, `is_active`
 
-### 3.1 Authentication
-- Supabase Auth via `store/useAuthStore.ts` + `features/auth/*`
-- `App.tsx` → `initializeAuth()` then `AuthGuard`
-- Maps keys are **not** user-scoped; they are app-scoped (`APP_CONFIG.GOOGLE.MAPS_API_KEY`)
+#### `attractions`
+- PK `place_id` (Google Place ID), `destination_id`, name, location, `static_data` JSONB, `assets` JSONB, `is_premium`
 
-### 3.2 Map boot sequence
-1. `Dashboard` mounts `MainMap`.
-2. `APIProvider` loads Maps JS with libraries `places` + `marker`.
-3. `Map` renders with `mapId`, `colorScheme="DARK"`, `disableDefaultUI`, `gestureHandling="greedy"`.
-4. `MapController` (inside map):
-   - Ensures default `cityMode` (Istanbul)
-   - Attaches native `map.addListener('click')` for Google POI `placeId`
-   - On POI click: `e.stop()` → `PlaceService.fetchEssentials(placeId)` → `useMapStore.setActivePOI`
-   - On city change: `fetchCurated(city)` + `panTo` / `setZoom`
-   - Watches geolocation → `setUserLocation([lat, lng])`
-5. Markers:
-   - Curated from `useDiscoveryStore.curatedPlaces`
-   - Footprints from `nearbyFootprints` + `pendingFootprints`
-   - User location AdvancedMarker
+#### `narratives`
+- Audio URLs + transcript, trigger type, `voice_profile`, duration; FK to attractions
 
-### 3.3 Places data movement
-```
-User click / Explore mood
-        │
-        ▼
-discoveryService (Supabase RPC) ──empty──► PlaceService.fetchNearbyFallback (Places New)
-        │
-        ▼
-useDiscoveryStore.discoveredPlaces / curatedPlaces
-        │
-        ▼
-POIController expand
-        │
-        ├─ PlaceService.fetchHybridDetails (Supabase attractions + cache)
-        └─ PlaceService.fetchFullDetails (Places New fetchFields)
-```
+Public read RLS policies are defined for destinations/attractions/narratives in that schema file.
 
-### 3.4 External integrations (maps)
-- **Maps JS API** — map tiles, Advanced Markers, clickable POI icons
-- **Places Library (New)** — essentials, full details, photos, nearby fallback
-- **Cloud Map ID** — required for Advanced Markers / cloud styling
-- **Gemini** — vibe summary only (not maps rendering)
+### Additional tables confirmed by client/SQL usage
+- `stamps`, `favorites`, `reward_ledger`, `chat_logs`
+- Exact full column lists for some of these live primarily in later SQL patches — **document columns from those files when modifying them; do not invent.**
 
-### 3.5 Important architectural decisions
-1. **Single maps entry:** Only `MainMap` owns `APIProvider`.
-2. **Hybrid POI truth:** Curated DB wins when present; Google fills gaps.
-3. **Field minimization:** Photos fetched only on demand (`fetchPlacePhotos`).
-4. **GeoPoint as boundary:** Services/UI must not invent ad-hoc `{lat,lng}` parsers for PostGIS.
-5. **Upgrade channel:** Production maps load must use **`version="quarterly"`** on `APIProvider` after upgrade (or explicit numbered version during incident rollback). Do not leave default weekly for premium production without a test window.
-
-### 3.6 Official references used for this phase
-- https://developers.google.com/maps/documentation/javascript/v2tov3 (historical; not applicable to this repo)
-- https://developers.google.com/maps/deprecations
-- https://developers.google.com/maps/documentation/javascript/versions
-- https://developers.google.com/maps/documentation/javascript/legacy/places-migration-overview
-- https://visgl.github.io/react-google-maps/docs/whats-new
-- npm `@vis.gl/react-google-maps@1.9.0` (2026-07-03)
+### Undocumented / verify before changing
+- Exact production deployment status of every SQL file under `supabase/code/`
+- Full RLS matrix across all tables
+- Whether `preferences` vs `semantic_profile` dual fields are fully consolidated remotely
 
 ---
 
-## 4. File Tree Rules (Existing Project)
+## State Management
 
-### Organization rules
+1. **Server state** — Supabase is source of truth for profile wallet, trips, stamps, favorites, curated attractions, chat logs.
+2. **Client state** — Zustand stores; map/UI ephemeral; discovery curated cache persisted 24h TTL.
+3. **Local durable** — IndexedDB for place payloads and outbox actions.
+4. **Derived** — Active-trip detection in `AuthGuard` / `hasActiveTrip`; visible curated markers from `showCurated` flag.
+5. **Async boundaries** — Stores call services; UI should not open parallel competing Places requests without the POI request-id guard pattern.
+6. **Conflict rules** — Prefer cloud on `syncWithCloud`; outbox retries in timestamp order and stops on first failure to preserve sequence; do not duplicate wallet math in multiple writers without going through RPC/ledger patterns.
+
+---
+
+## Routing and Page Composition
+
+```
+App
+ └─ AuthGuard
+     ├─ LoadingSplash (hydration / auth init)
+     ├─ AuthScreen (!user)
+     ├─ Onboarding (!onboardingCompleted)
+     └─ Dashboard (defaultTab tools if no active trip)
+          ├─ TopBar
+          ├─ MainMap (always; opacity by tab)
+          ├─ Tab overlay: Explore | MyTrip | Tools | Profile
+          ├─ MagicButton + Vision (home)
+          ├─ BottomBar
+          ├─ POIController
+          └─ VisionOverlay
+```
+
+Tabs (`AppTab`): `home` | `explore` | `wallet` | `tools` | `profile`  
+(`wallet` tab label in UI: «سفر من» / My Trip.)
+
+---
+
+## File Placement Rules
+
 | Category | Location |
 | --- | --- |
-| Map React components | `components/map/` |
-| POI sheet / detail UX | `components/poi/` |
-| Google Places + hybrid fetch | `services/placeService.ts` |
-| Supabase discovery RPCs | `services/discoveryService.ts` |
-| Map / POI Zustand | `store/useMapStore.ts`, `store/useDiscoveryStore.ts` |
-| Coordinate conversions | `utils/geoPoint.ts` |
-| Env / API keys | `config.ts` only |
-| App shell hosting map | `pages/Dashboard.tsx` |
-| Dependency pins | `package.json` **and** `index.html` importmap (must stay synchronized for this project) |
-| Brain docs | `docs/PROJECT.md`, `docs/ARCHITECTURE.md`, `docs/tasks.md` |
-| RTL / locale root | `index.html` (`lang="fa"`, `dir="rtl"`) |
-| Persian UI surfaces | `pages/*`, `components/*`, `features/*` |
+| Pages / screens | `pages/` |
+| Shared UI components | `components/{map,poi,voice,layout,tools,social,profile,wallet,camera,discovery,core}/` |
+| Feature modules | `features/{auth,onboarding,profile}/` |
+| Zustand stores | `store/` |
+| Services / adapters | `services/` (+ `services/ai`, `services/social`, `services/survival`) |
+| Hooks | `hooks/` |
+| Utils | `utils/` |
+| Shared types | `types.ts`, `supabase/code/types/` |
+| Config | `config.ts`, `vite.config.ts`, `tsconfig*.json` |
+| Constants / copy templates | `constants.ts` |
+| Supabase SQL & functions | `supabase/` |
+| Docs (Project Brain) | `docs/PROJECT.md`, `docs/ARCHITECTURE.md`, `docs/tasks.md` |
+| PWA assets | `manifest.json`, `sw.js` |
+| Historical notes | `note/`, `notes/`, `project-change-log/`, `debug/` — not runtime architecture |
 
-### New files that may be created during upgrade
-- Optional: `docs/` updates only via architect (already these three).
-- Optional: thin `services/maps/` adapter **only if** Places wait/load logic grows enough to justify extraction — prefer not creating unless `placeService.ts` becomes unsafe to modify.
+### Central architectural files
+- `App.tsx`, `features/auth/AuthGuard.tsx`, `pages/Dashboard.tsx`
+- `components/map/MainMap.tsx`, `services/placeService.ts`, `services/discoveryService.ts`
+- `store/use*Store.ts`, `utils/geoPoint.ts`, `config.ts`, `hooks/useGeminiLive.ts`
+
+### New files
+- Prefer extending existing modules.
+- Optional thin `services/maps/` adapter only if Places load logic becomes unsafe to keep inside `placeService.ts`.
 - Do **not** create a second map component tree.
-
-### Existing files that need modification (upgrade phase)
-| File | Why |
-| --- | --- |
-| `package.json` | Bump `@vis.gl/react-google-maps` to `1.9.0`; decide fate of unused markerclusterer |
-| `package-lock.json` | Lockfile regenerate after bump |
-| `index.html` | Sync importmap `@vis.gl/react-google-maps@1.9.0` |
-| `components/map/MainMap.tsx` | `APIProvider` channel/`onError`; AdvancedMarker anchors; keep libraries |
-| `components/map/MapControls.tsx` | Verify `useMap` still works after bump (likely no logic change) |
-| `services/placeService.ts` | Align Google readiness with `importLibrary`; consistent Place access; no legacy APIs |
-| `config.ts` | Only if env key wiring needs clarification — no new providers |
-
-### Files that must NOT be rewritten “for maps”
-- Auth, profile modals, voice pipeline, Edge Functions — out of scope unless a maps import breaks the build.
-- `components/tools/SubwayMap.tsx` — static image subway overlay; not Google Maps JS.
 
 ---
 
-## 5. Production Safety Rules for Coding Agents
+## Dependency and Boundary Rules
 
-1. Prefer **small sequential commits/PRs** matching `docs/tasks.md` order.
-2. After library bump, verify: map tiles, curated markers, user marker, POI click → essentials, Explore fallback nearby.
-3. Keep rollback path: pin `APIProvider` to previous numbered Maps version (`v=3.64` etc.) if a quarterly roll breaks behavior.
-4. Never ship `channel="beta"` / `alpha` to production users.
-5. Do not enable new billable Places fields “just in case.”
-6. Do not break Persian/RTL: preserve `lang="fa"` / `dir="rtl"`, keep user-facing copy in Persian, and review any touched UI for RTL layout, icons, and directional interactions.
+**Allowed**
+- pages/components → stores, services, utils, types
+- stores → services, other stores (sparingly), utils
+- services → supabase client, config, utils, other services
+- hooks → stores, services, constants
+
+**Forbidden**
+- services → React components
+- utils → network/Supabase (keep pure)
+- components → raw `createClient` bypassing `supabaseClient`
+- duplicate Maps `APIProvider` outside `MainMap`
+- UI importing Edge Function secrets or service-role keys
+
+---
+
+## Error, Loading, and Offline Behavior
+
+| Situation | Expected behavior |
+| --- | --- |
+| Network offline | `useUserStore.isOnline` false; outbox retains actions; curated cache may still render; `OfflineIndicator` available |
+| Missing Maps/Gemini key | Maps/voice features fail; prefer env configuration — do not expand hardcoded fallbacks |
+| Unauthorized | Auth screens / Edge Function 401; user-scoped queries fail closed |
+| Empty discovery | Persian empty state; optional Google nearby fallback |
+| Partial POI data | Sheet shows essentials first; expand merges hybrid + Google |
+| Google provider failure | Safe empty/error placeholders; preserve last curated markers |
+| Invalid input | Auth validation messages in Persian; stamp requires proximity |
+| Unexpected runtime errors | Console error; avoid uncaught crashes in map click / sync loops |
+| Geolocation denied | Map still usable; recenter no-ops without user location |
+
+---
+
+## Security and Privacy Boundaries
+
+1. Browser may hold **anon** Supabase key and Maps/Gemini keys via Vite env — treat as public client credentials; protect with HTTP referrer/API restrictions and RLS.
+2. **Service role** and server `GEMINI_API_KEY` exist only in Edge Functions / Supabase secrets — never in client bundles.
+3. `config.ts` currently includes fallback strings for local/dev convenience — production ops must supply `VITE_*` and must not treat fallbacks as secure defaults.
+4. Do not log passwords, full card data, or unnecessary PII.
+5. RLS: user tables are user-scoped; curated tourism tables may be public read by design.
+6. Chat logs store conversational content — treat as sensitive user data.
+
+---
+
+## Performance and Scalability Rules
+
+1. One Maps JS load path; keep `MainMap` mounted across tabs.
+2. Curated fetch guarded by city + 24h TTL.
+3. Places field minimization and on-demand photos.
+4. Memoized markers; skip invalid lat/lng.
+5. Outbox sequential processing to preserve trip/fuel ordering.
+6. Avoid introducing clustering or Map3D until product explicitly requires it.
+7. No speculative caching layers beyond IndexedDB + Zustand persist already in use.
+
+---
+
+## Architectural Anti-Patterns
+
+- Treating this codebase as Maps JS v2 or planning a v2→v3 migration.
+- Second state manager or second maps React library.
+- Business logic duplicated in POI UI and PlaceService.
+- Ad-hoc `{lat,lng}` PostGIS parsing outside `GeoPoint`.
+- Raw Maps script tags beside `APIProvider`.
+- Big-bang unrelated refactors during platform upgrades.
+- Wiring unused `@googlemaps/markerclusterer` without a product clustering requirement.
+- Assuming service worker is active without adding registration code.
+- Assuming Tehran map camera is specialized (current code pans non-Istanbul cities to Dubai coordinates).
+
+---
+
+## Current Initiative Appendix
+
+> **Temporary / initiative-specific.** Isolate from the stable architecture above. Safe to replace when the maps upgrade phase completes.
+
+### Current architectural objective
+Production-safe maps stack upgrade **without** a v2→v3 rewrite:
+- Wrapper `1.1.0` → `1.9.0` (npm + importmap)
+- Pin Maps channel (`quarterly`) + `APIProvider` `onError`
+- Modernize AdvancedMarker anchors
+- Harden Places readiness
+- Remove or consciously keep unused markerclusterer
+
+### Affected modules / files
+| File | Role in initiative |
+| --- | --- |
+| `package.json` / `package-lock.json` | Bump wrapper; markerclusterer decision |
+| `index.html` | Sync importmap; preserve `lang`/`dir` |
+| `components/map/MainMap.tsx` | Channel, onError, anchors |
+| `components/map/MapControls.tsx` | Verify `useMap` after bump |
+| `services/placeService.ts` | Places load hygiene |
+| `config.ts` | Key wiring clarification only if required |
+| `docs/*` | Architect-owned documentation |
+
+### Temporary constraints
+- Prefer staged, bisectable changes over one mega-PR.
+- Production: no `beta`/`alpha` Maps channels.
+- Preserve Persian/RTL on all touched map-adjacent UI.
+- Keep rollback via numbered Maps version pin if quarterly regresses.
+
+### Risks
+- Importmap/npm version drift
+- Marker double-offset if CSS translate and native anchors both apply
+- Places billing growth from expanded fields
+- Subtle RTL regressions on map chrome/tooltips
+
+### Migration / upgrade boundaries
+- In scope: React Google Maps library, Maps channel, marker anchoring, Places readiness, dead dependency cleanup, smoke validation.
+- Out of scope: Map3D, routing/Directions, auth/voice/Edge refactors, SubwayMap Google conversion, unrelated feature completion.
+
+### Solution evaluation (retained)
+| Option | Verdict |
+| --- | --- |
+| A. Console-only changes | Reject |
+| B. Single PR: 1.9.0 + weekly + all edits | Reject for production |
+| C. Staged inventory → dual pin → quarterly + onError → anchors → Places hygiene → dead-dep → smoke | **Selected** |
+
+### Official references for this phase
+- https://developers.google.com/maps/documentation/javascript/versions
+- https://developers.google.com/maps/deprecations
+- https://developers.google.com/maps/documentation/javascript/legacy/places-migration-overview
+- https://visgl.github.io/react-google-maps/docs/whats-new
+- npm `@vis.gl/react-google-maps@1.9.0` (noted 2026-07-03)
