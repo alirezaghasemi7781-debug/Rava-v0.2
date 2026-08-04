@@ -1,156 +1,221 @@
 # PROJECT.md — Project North Star
 
 **Product:** رهنما (Rava / Rahnam) — Smart Tour Guide  
-**Phase focus (current):** Maps platform upgrade readiness (production-safe)  
+**Document type:** Enduring project-wide source of truth  
 **Last architecture review:** 2026-08-04
+
+---
+
+## Product Overview
+
+رهنما is a luxury, voice-first, map-centric mobile web tour guide for Persian-speaking travelers. It turns city exploration into a reliable phone-browser experience: curated attractions on a dark Google Map, hybrid POI details (first-party curated content plus Google Places), social footprints, passport-style stamps and wallet fuel, trip timeline tools, survival utilities (currency, flashcards, subway map), and a live Gemini voice agent grounded in map and profile context.
+
+The product is a single-page React client backed by Supabase (Auth, Postgres/PostGIS, Realtime, Storage, Edge Functions) and Google Maps / Places / Gemini. It is designed for imperfect mobile networks: IndexedDB place cache, offline outbox sync, and graceful empty/fallback paths when Google or Supabase are unavailable.
+
+Primary city modes today: **Istanbul**, **Dubai**, and **Tehran** (schema and types support all three; map camera defaults currently specialize Istanbul vs non-Istanbul).
 
 ---
 
 ## Business Goal
 
-Deliver a premium, AI-assisted mobile web tour guide for travelers that turns city exploration into a reliable map-first experience: curated places, social footprints, voice narration, and discovery — without breaking maps for existing paying users during platform upgrades.
+Deliver a premium AI-assisted tour guide that Iranian travelers trust on real trips—discover places, hear curated narration, leave social proof, and use survival tools—while keeping maps, billing surface area, and auth stable for existing users.
 
 ---
 
-## Target Persona
+## Target Personas
 
-Persian-speaking travelers (and expats) visiting major cities (Istanbul, Dubai, Tehran) who want a luxury, low-friction guide: discover nearby places, open rich POI details, leave footprints, and use survival tools — on a phone browser, often on imperfect networks.
-
----
-
-## Localization & RTL (Mandatory — All Phases)
-
-The application is **Persian-first** and **RTL-only** for user-facing UI. This is a non-negotiable product requirement, not a cosmetic preference.
-
-### Primary language
-- **Persian (Farsi)** is the primary and default interface language for all user-visible copy: labels, buttons, navigation, errors, empty states, tooltips, modals, and AI-generated user-facing text.
-- English may appear only where it is product-intentional (e.g. brand names, city names in data) or where content is inherently technical/LTR (see exceptions below).
-
-### RTL layout
-- The entire user interface must be **fully RTL** (`dir="rtl"`, `lang="fa"` at document root — already set in `index.html`).
-- All layouts, components, forms, navigation, typography, spacing, icons, and directional interactions must be reviewed for correct RTL behavior.
-- Default text alignment, flex/grid flow, padding/margin direction, drawer/sheet motion, back/forward affordances, and icon mirroring must follow RTL conventions unless an exception applies.
-
-### Allowed LTR exceptions (only)
-LTR UI is **not allowed** except for inherently LTR technical content:
-- Source code snippets
-- URLs
-- Email addresses
-- Phone numbers
-- Numeric identifiers (IDs, codes, coordinates when displayed as raw values)
-
-These exceptions must remain visually isolated (e.g. `dir="ltr"` on a span) and must not flip surrounding layout to LTR.
-
-### Coding-agent rule
-Any change — including maps upgrades — that touches UI must **preserve or improve** Persian/RTL correctness. Introducing LTR-default layouts, left-aligned Persian body text, or unmirrored directional controls is a defect.
+1. **Persian-speaking traveler (primary)** — Visiting Istanbul or Dubai (and expanding to Tehran), wants low-friction discovery, rich POI context, and spoken guidance on a phone browser.
+2. **Expat / returning visitor** — Needs passport/stamps, favorites, referrals, and tools even when not mid-trip.
+3. **Active trip user vs veteran** — Auth routing sends users with an active trip window into the map-first Dashboard; veterans default to the tools tab inside the same shell.
 
 ---
 
-## Tech Stack
+## Product Principles
+
+1. **Simplicity** — Prefer the established stack and thin service modules over new frameworks or speculative abstractions.
+2. **Production readiness** — Changes must preserve map load, auth session, wallet integrity, and Persian/RTL UI for paying users.
+3. **Low operational risk** — Stage upgrades; pin Maps release channel for production; minimize billable Google Places fields.
+4. **Maintainability** — Domain logic in `services/` and `store/`; UI components stay presentation-focused.
+5. **Clean Architecture** — Clear boundaries: pages compose UI; stores own client state; services own external I/O; utils own shared pure helpers (`GeoPoint`).
+6. **Avoid unnecessary complexity** — No second maps wrapper, no second global state library, no big-bang rewrites during platform upgrades.
+7. **Root-cause solutions** — Fix coordinate order, loader ownership, and API deprecations at the boundary—not with UI patches.
+
+---
+
+## Technology Stack
+
+Verified from `package.json`, `index.html`, `vite.config.ts`, `config.ts`, and source imports. Do not assume packages that are not listed here.
 
 ### Frameworks & languages
 - **React** `^19.2.3` + **React DOM** `^19.2.3`
 - **TypeScript** `~5.8.2`
-- **Vite** `^6.2.0` (bundler / dev server)
+- **Vite** `^6.2.0` (`@vitejs/plugin-react` `^5.0.0`)
 
 ### UI & client libraries
-- **Zustand** `^5.0.11` (all client state)
+- **Zustand** `^5.0.11` (all client state; persist middleware for auth/user/discovery/survival)
 - **Framer Motion** `^12.29.0`
 - **Lucide React** `^0.563.0`
-- **Tailwind CSS** via CDN (`cdn.tailwindcss.com` in `index.html`) + local `index.css`
+- **Tailwind CSS** via CDN (`cdn.tailwindcss.com` in `index.html`) plus inline critical styles in `index.html`
 - **Vazirmatn** (Google Fonts)
 
-### Maps stack (CRITICAL — corrected 2026-08-04)
-| Layer | Current in repo | Target for upgrade phase |
-| --- | --- | --- |
-| Google Maps JavaScript API | **v3** (already; loaded via React wrapper) | Stay on **v3**; pin release channel |
-| React wrapper | `@vis.gl/react-google-maps` **`1.1.0`** (pinned) | Upgrade to **`1.9.0`** (latest as of 2026-07-03) |
-| Markers | `AdvancedMarker` + `mapId` | Keep Advanced Markers; adopt modern anchor props |
-| Places | Places library + **`google.maps.places.Place`** (New) | Keep Places (New); harden load/error patterns |
-| Clustering package | `@googlemaps/markerclusterer` `^2.6.2` (declared, **unused**) | Remove or intentionally wire — do not leave dead |
-
-**Official Google status (as of 2026-08-04 research):**
-- Maps JS API **v2 is decommissioned** (since 2021-05-26). This project does **not** use v2.
-- Weekly channel ≈ **3.65**; quarterly ≈ **3.64**; mid-August 2026 rolls weekly → **3.66**.
-- Legacy `google.maps.Marker` deprecated (prefer Advanced Markers) — project already compliant.
-- Legacy `PlacesService` deprecated for new customers (prefer `Place`) — project already on `Place`.
-- Drawing Library & Heatmap Layer unavailable as of May 2026 — project does not use them.
-- `DirectionsService` / `DistanceMatrixService` deprecated 2026-02-25 (replacement: Routes library `Route` / `RouteMatrix`) — project does not use them today.
+### Maps
+- **`@vis.gl/react-google-maps`** `1.1.0` (pinned in `package.json` and `index.html` importmap)
+- Google Maps JavaScript API **v3** (loaded exclusively through `APIProvider`)
+- **Advanced Markers** + cloud **`mapId`**
+- Places (New): `google.maps.places.Place`, `fetchFields`, `Place.searchNearby`, `importLibrary("places")`
+- Declared but **unused** in application TS/TSX: `@googlemaps/markerclusterer` `^2.6.2`
 
 ### Backend & data
-- **Supabase** (Auth, Postgres + PostGIS, RPC, Realtime, Edge Functions)
-- Local IndexedDB-style cache via `dbService` for place payloads
+- **Supabase** Auth, Postgres + PostGIS, RPC, Realtime, Storage, Edge Functions
+- Client created via `https://esm.sh/@supabase/supabase-js@^2.48.1` in `services/supabaseClient.ts` (not an npm dependency)
+- Local **IndexedDB** via `services/dbService.ts` (places cache + atomic outbox)
 
 ### AI / voice
-- **`@google/genai`** `^1.38.0` (Gemini)
-- Custom `AudioGraph` + Gemini Live hooks
+- **`@google/genai`** `^1.38.0` (Gemini Live + vibe summaries)
+- Custom `AudioGraph` (`services/audioGraph.ts`) + `hooks/useGeminiLive.ts`
+- Browser Speech Synthesis for flashcard TTS (`services/survival/ttsService.ts`)
 
 ### Infrastructure / tooling
-- Vite build (`npm run build`)
-- Supabase Edge Functions under `supabase/functions/`
-- PWA pieces: `manifest.json`, `sw.js`
+- npm scripts: `dev`, `build`, `preview`
+- Supabase Edge Functions under `supabase/functions/` (`process-ticket`, `verify-price`, `the-dreamer`)
+- PWA assets present: `manifest.json`, `sw.js` — **service worker registration is not present** in `index.tsx` / `App.tsx` (assets only)
 
 ### External services
-- Google Maps Platform (Maps JS API, Places Library / Places API New, Map ID cloud styling)
+- Google Maps Platform (Maps JS, Places New, Map ID cloud styling)
 - Google Gemini / GenAI
-- Supabase cloud project
-- Unsplash (image URLs where curated assets use it)
+- Supabase cloud project (URL/anon key via `VITE_*` / `config.ts`)
+- Unsplash image URLs where curated assets use them
 
 ---
 
-## Architectural Correction (Technology Conflict Rule)
+## Core Product and Domain Rules
 
-**User belief:** “We are on Google Maps API v2 and must move to v3.x.”
-
-**Codebase reality:** The app already runs on **Maps JavaScript API v3** through `@vis.gl/react-google-maps`, using:
-- `APIProvider` + `Map` with **`mapId`**
-- **`AdvancedMarker`**
-- Places (New): `Place`, `fetchFields`, `Place.searchNearby`, `importLibrary("places")`
-
-**Preserved architecture decision:** Do **not** perform a v2→v3 rewrite. Adapt the upgrade to the existing stack:
-
-1. Bump **React Maps library** `1.1.0` → `1.9.0`
-2. Pin Maps JS **release channel** for production predictability (`quarterly`)
-3. Modernize marker anchoring to library/API-native props
-4. Harden Places (New) loading and failure modes
-5. Explicitly ban reintroduction of decommissioned/deprecated Google Maps surfaces
+1. **Hybrid POI truth** — Curated first-party data (`attractions` / `narratives` via Supabase) wins when present; Google Places fills gaps for essentials, ratings, reviews, and nearby fallback.
+2. **Coordinate order** — PostGIS / GEOGRAPHY is `(longitude, latitude)`. Google Maps and app UI use `(latitude, longitude)`. All conversions go through `utils/geoPoint.ts` (`GeoPoint`). Never invent ad-hoc parsers for PostGIS points.
+3. **Place identity** — Google Place ID is the golden key for curated attractions (`attractions.place_id`) and map POI clicks.
+4. **Wallet / fuel** — `wallet_balance` is AI hours (decimal). UI may display minutes as hours × 60. Default welcome gift is 2.0 hours. Fuel deduction and stamp rewards go through outbox/RPC paths for resilience.
+5. **Cities** — Supported `CityMode`: `Istanbul` | `Dubai` | `Tehran` | `null`. Profiles enforce the three city names in the database check constraint.
+6. **Auth gating** — Unauthenticated → `AuthScreen`; incomplete onboarding → `Onboarding`; otherwise → `Dashboard` (tab default depends on active-trip detection).
+7. **Single Maps loader** — Only `components/map/MainMap.tsx` owns `APIProvider`. Do not add raw Maps `<script>` tags.
+8. **Field minimization** — Places `fetchFields` must request only needed fields; photos are on-demand (`fetchPlacePhotos`).
+9. **Persian voice persona** — Live agent system instruction in `constants.ts` is Persian colloquial tour-guide voice; user-facing AI text remains Persian.
 
 ---
 
-## Critical: Anti-Patterns & Hard Restrictions
+## Localization and Interface Rules
 
-### Maps — absolute bans
-- **Do not** load or reference Maps JavaScript API **v2** (`maps.google.com/maps`, `GMap2`, global `G*` APIs).
-- **Do not** use legacy `google.maps.Marker`. Use only `AdvancedMarker` / `google.maps.marker.AdvancedMarkerElement`.
-- **Do not** use legacy `google.maps.places.PlacesService`. Use only `google.maps.places.Place` (and related New Places APIs).
-- **Do not** introduce Drawing Library, Heatmap Layer, or KmlLayer.
-- **Do not** introduce `DirectionsService` / `DistanceMatrixService`. If routing is ever needed, use Maps JS **Routes** library (`Route` / `RouteMatrix`) behind a dedicated service module — not inline in UI.
-- **Do not** remove or change the cloud **`mapId`** without verifying Advanced Markers still render.
-- **Do not** load Maps via raw `<script src="maps.googleapis.com/...">` outside `APIProvider` (single loader ownership).
-- **Do not** use `beta` / `alpha` Maps channels in production builds.
-- **Do not** call `map.setTilt(45)` expecting 45° imagery (removed as of Maps JS 3.65 / May 2026).
+The application is **Persian-first** and **RTL-only** for user-facing UI. This is a non-negotiable product requirement.
+
+### Primary language
+- **Persian (Farsi)** is the default for all user-visible copy: labels, buttons, navigation, errors, empty states, tooltips, modals, and AI-generated user-facing text.
+- English may appear only where product-intentional (brand tokens, some secondary labels) or for inherently technical/LTR content (see exceptions).
+
+### RTL layout
+- Document root: `index.html` sets `<html lang="fa" dir="rtl">`.
+- Typography: Vazirmatn; dark luxury theme (`#050505` base, yellow accent `#eab308`).
+- Layouts, forms, navigation, spacing, icons, and directional interactions must behave correctly under RTL.
+
+### Allowed LTR exceptions (only)
+- Source/code snippets, URLs, emails, phone numbers, numeric IDs/codes/raw coordinates — isolated with nested `dir="ltr"` where needed; never flip the page to LTR.
+
+### Accessibility & mobile
+- Viewport is mobile-locked (`maximum-scale=1.0`, `viewport-fit=cover`).
+- Safe-area padding utility (`.pb-safe`) for notched devices.
+- Requested permissions (metadata): camera, microphone, geolocation.
+
+---
+
+## Architectural Boundaries
+
+| Layer | Responsibility | Must not contain |
+| --- | --- | --- |
+| `pages/` | Tab/shell composition and screen layout | Raw Google/Supabase protocol details |
+| `components/` | Reusable UI (map, POI, voice, layout, tools, social) | Duplicate business rules already in services |
+| `features/` | Auth and profile/onboarding feature modules | Map loader ownership |
+| `store/` | Zustand client state and orchestration of service calls | Direct Maps JS script loading |
+| `services/` | External I/O (Places, discovery, auth client, sync, AI helpers, social) | JSX / visual layout |
+| `hooks/` | Cross-cutting React hooks (e.g. Gemini Live) | Persistence schema ownership |
+| `utils/` | Pure helpers (`GeoPoint`, geo distance, JSON/audio helpers) | Network side effects |
+| `config.ts` | Env-backed keys and endpoints | Feature UI |
+| `supabase/` | SQL, notes, Edge Functions | Client React components |
+| `docs/` | Project Brain (this file, architecture, tasks) | Runtime code |
+
+---
+
+## Strict Anti-Patterns
+
+### Maps
+- Do **not** load Maps JavaScript API v2 or global `G*` APIs.
+- Do **not** use legacy `google.maps.Marker` — only `AdvancedMarker` / Advanced Marker Element.
+- Do **not** use legacy `google.maps.places.PlacesService` — only Places (New) `Place`.
+- Do **not** introduce Drawing Library, Heatmap Layer, or KmlLayer.
+- Do **not** introduce `DirectionsService` / `DistanceMatrixService` inline; if routing is ever required, use Routes library behind a dedicated service module.
+- Do **not** remove/change cloud `mapId` without verifying Advanced Markers.
+- Do **not** load Maps outside `APIProvider`.
+- Do **not** use `beta` / `alpha` Maps channels in production.
+- Do **not** add a second React maps wrapper (`@react-google-maps/api`, `google-map-react`, etc.).
+- Do **not** leave unused map dependencies without an explicit keep-or-remove decision (`@googlemaps/markerclusterer` is currently unused).
 
 ### State & UI
-- **Do not** introduce Redux, MobX, Jotai, Recoil, or Context-as-global-store. **Zustand only.**
-- **Do not** add another maps React wrapper (`@react-google-maps/api`, `google-map-react`, etc.). Keep **`@vis.gl/react-google-maps` only.**
-- Prefer Tailwind utility classes already used in the project; avoid inventing a second CSS architecture. Do not expand inline style usage beyond necessary map marker geometry.
+- Do **not** introduce Redux, MobX, Jotai, Recoil, or Context-as-global-store — **Zustand only**.
+- Prefer Tailwind utilities already used; do not invent a second CSS architecture.
+- Do **not** duplicate API/business logic inside UI when a service already owns it.
 
-### Localization & RTL — absolute bans
-- **Do not** ship LTR-first layouts, `dir="ltr"` on root/body, or English-default UI copy for user-facing strings.
-- **Do not** use physical directional Tailwind/CSS (`left-*`, `right-*`, `ml-*`, `mr-*`, `pl-*`, `pr-*`, `text-left`) for layout that should mirror in RTL — prefer logical properties (`start`/`end`, `ms`/`me`, `ps`/`pe`, `text-right` for Persian body) or verify RTL correctness explicitly.
-- **Do not** add unmirrored chevrons, back arrows, or slide animations that assume LTR without RTL review.
-- **Do not** remove or weaken `lang="fa"` / `dir="rtl"` on `index.html`.
-- **Do not** replace Persian user-facing strings with English during refactors unless the string is an allowed LTR exception (URL, email, phone, ID, code).
+### Localization & RTL
+- Do **not** ship LTR-first root layout or English-default user-facing strings.
+- Do **not** remove `lang="fa"` / `dir="rtl"` from `index.html`.
+- Prefer logical start/end spacing for new layout work; verify physical `left`/`right` utilities under RTL.
 
-### Data & coordinates
-- **Do not** invent a second coordinate type. All lat/lng conversions go through `utils/geoPoint.ts` (`GeoPoint`).
-- **Do not** store PostGIS points as `(lat, lng)`. PostGIS is `(lng, lat)`.
+### Data & security
+- Do **not** invent a second coordinate type outside `GeoPoint`.
+- Do **not** store PostGIS points as `(lat, lng)`.
+- Do **not** commit new hardcoded secrets; prefer `VITE_*` via `config.ts` `getEnv`. Production must not rely on embedded fallback keys.
+- Do **not** expand Places `fetchFields` “just in case.”
+- Do **not** add speculative abstractions without a concrete current use case.
 
-### Security / production
-- **Do not** commit new hardcoded API keys. Prefer `VITE_*` env via `config.ts` `getEnv`.
-- **Do not** expand client-side Google billing surface area without field minimization (Places `fetchFields` must request only needed fields).
-- **Do not** big-bang unrelated refactors during the maps upgrade phase.
+---
 
-### Scope of this phase
-- **Do not** mix feature completion or unrelated bug fixes into maps upgrade tasks unless a fix is required to keep maps working.
-- **Do not** introduce Map3D / geometry components from `@vis.gl/react-google-maps` 1.8+ unless a product requirement explicitly asks — upgrade first, expand later.
+## Quality and Production Standards
+
+| Area | Expectation |
+| --- | --- |
+| Error handling | Services return safe empties/fallbacks where UX requires continuity; log unexpected failures without leaking PII. |
+| Logging | Prefer concise console diagnostics with module tags (`[Discovery]`, `[PlaceService]`, `[Sync Manager]`). Chat turns may be fire-and-forget to `chat_logs`. |
+| Security | Supabase JWT for user actions; Edge Functions validate auth or use service role only server-side; RLS on user tables; public read only where content is intentionally public (curated attractions). |
+| Privacy | Do not log full transcripts or locations into third-party analytics without product approval; keep secrets in env. |
+| Performance | Cache curated places (24h client TTL); Places essentials/full details ~30-day IndexedDB TTL; photos on demand; avoid unnecessary map remounts. |
+| Dependency management | Keep `package.json` and `index.html` importmap pins synchronized for shared CDN/npm packages used by this project. |
+| Testing | No automated test runner is configured in `package.json` today; validate via `npm run build` and manual browser smoke on map/auth/voice paths. |
+| Build validation | `npm run build` must succeed after dependency or type changes. |
+| Browser/runtime | Target modern mobile browsers with geolocation, mic, camera; respect offline indicator and outbox replay. |
+| Backward compatibility | Preserve Place ID keys, wallet semantics, and auth session storage keys unless a versioned migration is planned. |
+| Failure behavior | Denied geolocation must not crash the map; Google not ready returns safe placeholders; network loss queues outbox actions. |
+| Observability | Realtime profile wallet updates drive reward toasts; sync manager processes outbox on `online`. |
+
+---
+
+## Current Initiative Appendix
+
+> **Temporary / initiative-specific.** Replace or archive when the maps upgrade phase ends. Does not redefine the product foundation above.
+
+### Initiative: Maps platform upgrade readiness (production-safe)
+
+**Correction vs user belief:** The app is **already on Maps JavaScript API v3** with Advanced Markers and Places (New). This is **not** a v2→v3 rewrite.
+
+**Objective**
+1. Bump `@vis.gl/react-google-maps` `1.1.0` → `1.9.0` (npm + importmap lockstep).
+2. Pin Maps JS release channel for production (`quarterly` preferred).
+3. Modernize AdvancedMarker anchoring (replace CSS `translate(-50%, -50%)` with library anchor props when available).
+4. Harden Places (New) readiness (`importLibrary` consistency).
+5. Resolve unused `@googlemaps/markerclusterer` (prefer remove unless clustering is immediately scheduled).
+
+**Official Google notes informing this phase (as of 2026-08-04 research)**
+- Maps JS v2 decommissioned since 2021 — not used here.
+- Legacy `Marker` and `PlacesService` deprecated — project already on Advanced Markers + `Place`.
+- Drawing/Heatmap unavailable as of May 2026 — unused.
+- `DirectionsService` / `DistanceMatrixService` deprecated 2026-02-25 — unused; future routing must use Routes library.
+
+**Phase anti-scope**
+- Unrelated feature work, Map3D adoption, routing features, or broad bug hunts unless required to keep maps working.
+
+**Authoritative task list for this phase:** see `docs/tasks.md` (maps upgrade roadmap). Do not treat that file as the product north star.
