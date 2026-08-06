@@ -1,12 +1,8 @@
-
 import React from 'react';
-import { motion as _motion } from 'framer-motion';
-import { X, Mic2, Play, Check, Headphones } from 'lucide-react';
-import { GlassCard } from '../../../components/core/GlassCard';
+import { Mic2, Play, Check, Headphones } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { AudioGraph } from '../../../services/audioGraph';
-
-const motion = _motion as any;
+import { ModalShell, ModalCard, ModalHeader, Button } from '../../../components/ui';
 
 const VOICES = [
   { id: 'Kore', name: 'کُور (مردانه - صمیمی)', desc: 'صدای گرم و محاوره‌ای' },
@@ -33,57 +29,65 @@ export const VoiceLabModal: React.FC<VoiceLabModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[6000] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm">
-        <GlassCard className="border-white/5 p-8 rounded-[4rem]">
-          <button onClick={onClose} className="absolute top-6 left-6 text-white/20"><X /></button>
+    <ModalShell open={true} onClose={onClose} contentClassName="max-w-sm">
+      <ModalCard>
+        <ModalHeader
+          icon={<Headphones size={28} className="text-black" />}
+          title="لابراتوار حنجره"
+          subtitle="تنظیم صدای راوا"
+          onClose={onClose}
+          className="[&>div:last-child>div:first-child]:bg-rava-gold [&>div:last-child>div:first-child]:border-rava-gold/30"
+        />
 
-          <div className="flex flex-col items-center gap-2 mb-10">
-            <div className="w-16 h-16 bg-yellow-500 rounded-3xl flex items-center justify-center text-black shadow-2xl">
-              <Headphones size={32} />
-            </div>
-            <h3 className="text-2xl font-black text-white">لابراتوار حنجره</h3>
-            <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Neural Voice Tuning</p>
+        <div className="space-y-6 text-right">
+          <h4 className="px-1 text-rava-xs font-black tracking-widest text-white/40">انتخاب پرسونا</h4>
+          <div className="space-y-2">
+            {VOICES.map((voice) => (
+              <button
+                key={voice.id}
+                type="button"
+                onClick={() => handleSelect(voice.id)}
+                className={`flex w-full items-center justify-between rounded-rava-xl border p-4 transition-all ${
+                  currentVoice === voice.id
+                    ? 'border-rava-gold/40 bg-rava-gold/10'
+                    : 'border-white/5 bg-white/5 opacity-60 hover:opacity-100'
+                }`}
+              >
+                {currentVoice === voice.id ? <Check className="text-rava-gold" size={18} /> : <Play className="text-white/20" size={16} />}
+                <div className="text-right">
+                  <span className="block text-rava-sm font-black text-white">{voice.name}</span>
+                  <span className="text-rava-xs font-bold text-white/40">{voice.desc}</span>
+                </div>
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-6 text-right">
-            <h4 className="text-white/40 text-xs font-black mr-2 uppercase tracking-widest">انتخاب پرسونا</h4>
-            <div className="space-y-3">
-              {VOICES.map(voice => (
-                <button 
-                  key={voice.id} onClick={() => handleSelect(voice.id)}
-                  className={`w-full flex items-center justify-between p-5 rounded-3xl border transition-all ${currentVoice === voice.id ? 'bg-yellow-500/10 border-yellow-500/40' : 'bg-white/5 border-white/5 opacity-50'}`}
-                >
-                  {currentVoice === voice.id ? <Check className="text-yellow-500" size={20} /> : <Play className="text-white/20" size={16} />}
-                  <div className="text-right">
-                    <span className="text-white font-black text-sm block">{voice.name}</span>
-                    <span className="text-white/40 text-[10px] font-bold">{voice.desc}</span>
-                  </div>
-                </button>
-              ))}
+          <div className="space-y-4 border-t border-white/5 pt-4">
+            <div className="flex items-center justify-between px-1">
+              <span className="font-mono text-rava-sm font-black text-rava-gold">{currentRate}x</span>
+              <h4 className="text-rava-xs font-black tracking-widest text-white/40">سرعت صحبت</h4>
             </div>
-
-            <div className="pt-6 space-y-6">
-              <div className="flex justify-between items-center px-2">
-                <span className="text-yellow-500 font-mono font-black">{currentRate}x</span>
-                <h4 className="text-white/40 text-xs font-black uppercase tracking-widest">سرعت صحبت</h4>
-              </div>
-              <input 
-                type="range" min="0.5" max="1.5" step="0.1" 
-                value={currentRate} onChange={e => handleRateChange(parseFloat(e.target.value))}
-                className="w-full accent-yellow-500 bg-white/5 h-2 rounded-full appearance-none cursor-pointer"
-              />
-              <div className="flex justify-between px-1 text-[8px] font-black text-white/10 uppercase tracking-tighter">
-                <span>Fast</span>
-                <span>Normal</span>
-                <span>Relaxed</span>
-              </div>
+            <input
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.1"
+              value={currentRate}
+              onChange={(e) => handleRateChange(parseFloat(e.target.value))}
+              className="h-2 w-full cursor-pointer appearance-none rounded-full bg-white/5 accent-rava-gold"
+            />
+            <div className="flex justify-between px-1 text-rava-xs font-black text-white/20 ltr-island">
+              <span>Fast</span>
+              <span>Normal</span>
+              <span>Relaxed</span>
             </div>
-
-            <button onClick={onClose} className="w-full bg-white text-black py-5 rounded-3xl font-black text-lg shadow-xl active:scale-95 transition-all mt-4">بسیار خب</button>
           </div>
-        </GlassCard>
-      </motion.div>
-    </div>
+
+          <Button fullWidth variant="secondary" size="lg" onClick={onClose}>
+            بسیار خب
+          </Button>
+        </div>
+      </ModalCard>
+    </ModalShell>
   );
 };

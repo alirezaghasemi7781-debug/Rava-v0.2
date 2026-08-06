@@ -1,11 +1,10 @@
-
 import React, { useRef, useEffect, useState } from 'react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
-import { X, Camera, Scan, Sparkles, Loader2 } from 'lucide-react';
+import { X, Sparkles, Loader2 } from 'lucide-react';
 import { useUIStore } from '../../store/useUIStore';
 import { useGeminiLive } from '../../hooks/useGeminiLive';
+import { IconButton } from '../ui';
 
-// Fix for Framer Motion type resolution issues in the current environment
 const motion = _motion as any;
 
 export const VisionOverlay: React.FC = () => {
@@ -19,35 +18,35 @@ export const VisionOverlay: React.FC = () => {
     let frameInterval: number;
 
     if (showVision) {
-      navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } 
-      })
-      .then(stream => {
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        
-        // Start streaming frames if the AI session is recording
-        frameInterval = window.setInterval(() => {
-          if (canvasRef.current && videoRef.current && isRecording) {
-            const canvas = canvasRef.current;
-            const video = videoRef.current;
-            const context = canvas.getContext('2d');
-            if (context) {
-              canvas.width = 320; // Lower res for efficiency
-              canvas.height = (video.videoHeight / video.videoWidth) * 320;
-              context.drawImage(video, 0, 0, canvas.width, canvas.height);
-              
-              const base64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
-              sendVisionFrame(base64);
-              setIsAnalyzing(true);
-              setTimeout(() => setIsAnalyzing(false), 500);
+      navigator.mediaDevices
+        .getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
+        })
+        .then((stream) => {
+          if (videoRef.current) videoRef.current.srcObject = stream;
+
+          frameInterval = window.setInterval(() => {
+            if (canvasRef.current && videoRef.current && isRecording) {
+              const canvas = canvasRef.current;
+              const video = videoRef.current;
+              const context = canvas.getContext('2d');
+              if (context) {
+                canvas.width = 320;
+                canvas.height = (video.videoHeight / video.videoWidth) * 320;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const base64 = canvas.toDataURL('image/jpeg', 0.5).split(',')[1];
+                sendVisionFrame(base64);
+                setIsAnalyzing(true);
+                setTimeout(() => setIsAnalyzing(false), 500);
+              }
             }
-          }
-        }, 1500); // 1.5 FPS is plenty for tour guide vision
-      })
-      .catch(err => console.error("Camera error:", err));
+          }, 1500);
+        })
+        .catch((err) => console.error('Camera error:', err));
     } else {
       const stream = videoRef.current?.srcObject as MediaStream;
-      stream?.getTracks().forEach(t => t.stop());
+      stream?.getTracks().forEach((t) => t.stop());
     }
 
     return () => clearInterval(frameInterval);
@@ -56,47 +55,38 @@ export const VisionOverlay: React.FC = () => {
   return (
     <AnimatePresence>
       {showVision && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[5000] bg-black"
-        >
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            className="w-full h-full object-cover opacity-80"
-          />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[5000] bg-black">
+          <video ref={videoRef} autoPlay playsInline className="h-full w-full object-cover opacity-80" />
           <canvas ref={canvasRef} className="hidden" />
-          
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-            <motion.div 
+
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <motion.div
               animate={{ opacity: [0.3, 0.8, 0.3] }}
               transition={{ duration: 2, repeat: Infinity }}
-              className="w-72 h-72 border-2 border-yellow-500/30 rounded-[3rem] relative"
+              className="relative h-72 w-72 rounded-rava-modal border-2 border-rava-gold/30"
             >
-              {/* Corners */}
-              <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-l-4 border-yellow-500 -mt-1 -ml-1 rounded-tl-[2rem]" />
-              <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-yellow-500 -mt-1 -mr-1 rounded-tr-[2rem]" />
-              <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-yellow-500 -mb-1 -ml-1 rounded-bl-[2rem]" />
-              <div className="absolute bottom-0 right-0 w-12 h-12 border-b-4 border-r-4 border-yellow-500 -mb-1 -mr-1 rounded-br-[2rem]" />
-              
-              <motion.div 
+              <div className="absolute -ms-1 -mt-1 start-0 top-0 h-12 w-12 rounded-tl-rava-lg border-s-4 border-t-4 border-rava-gold" />
+              <div className="absolute -me-1 -mt-1 end-0 top-0 h-12 w-12 rounded-tr-rava-lg border-e-4 border-t-4 border-rava-gold" />
+              <div className="absolute -mb-1 -ms-1 bottom-0 start-0 h-12 w-12 rounded-bl-rava-lg border-b-4 border-s-4 border-rava-gold" />
+              <div className="absolute -mb-1 -me-1 bottom-0 end-0 h-12 w-12 rounded-br-rava-lg border-b-4 border-e-4 border-rava-gold" />
+
+              <motion.div
                 animate={{ top: ['0%', '100%', '0%'] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute left-0 right-0 h-1 bg-yellow-500/40 shadow-[0_0_20px_rgba(234,179,8,0.8)] z-10"
+                transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                className="absolute inset-x-0 z-10 h-1 bg-rava-gold/40 shadow-[0_0_20px_rgba(234,179,8,0.8)]"
               />
 
               <AnimatePresence>
                 {isAnalyzing && (
-                  <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 flex items-center justify-center bg-yellow-500/5 backdrop-blur-[2px] rounded-[3rem]"
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex items-center justify-center rounded-rava-modal bg-rava-gold/5 backdrop-blur-[2px]"
                   >
                     <div className="flex flex-col items-center gap-2">
-                      <Sparkles className="text-yellow-500 animate-pulse" />
-                      <span className="text-yellow-500 text-[10px] font-black uppercase tracking-tighter">Analyzing Reality</span>
+                      <Sparkles className="animate-pulse text-rava-gold" />
+                      <span className="text-rava-xs font-black uppercase tracking-tighter text-rava-gold">Analyzing Reality</span>
                     </div>
                   </motion.div>
                 )}
@@ -104,29 +94,24 @@ export const VisionOverlay: React.FC = () => {
             </motion.div>
           </div>
 
-          <div className="absolute bottom-16 left-0 right-0 flex flex-col items-center gap-8">
-            <div className="glass px-6 py-3 rounded-full flex items-center gap-3 border-yellow-500/20">
-              <Loader2 size={16} className="text-yellow-500 animate-spin" />
-              <span className="text-white font-bold text-xs">رهنما داره محیط رو اسکن میکنه...</span>
+          <div className="absolute inset-x-0 bottom-16 flex flex-col items-center gap-8">
+            <div className="glass flex items-center gap-3 rounded-full border-rava-gold/20 px-6 py-3">
+              <Loader2 size={16} className="animate-spin text-rava-gold" />
+              <span className="text-rava-xs font-bold text-white">راوا داره محیط رو اسکن میکنه...</span>
             </div>
 
-            <button 
-              onClick={() => setShowVision(false)}
-              className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center text-white shadow-2xl active:scale-90 transition-transform"
-            >
-              <X size={32} />
-            </button>
+            <IconButton icon={X} label="بستن دوربین" onClick={() => setShowVision(false)} size="lg" variant="solid" className="h-20 w-20" iconSize={32} />
           </div>
-          
-          <div className="absolute top-16 left-0 right-0 px-8 flex justify-between items-start">
-             <div className="glass p-4 rounded-2xl flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="text-white/60 text-[10px] font-black uppercase">Live Vision Session</span>
-             </div>
-             <div className="text-right">
-                <h2 className="text-white font-black text-xl mb-1">چشم هوشمند رهنما</h2>
-                <p className="text-white/40 text-xs font-medium">دوربین رو بگیر سمت هر چیزی تا برات توضیح بدم</p>
-             </div>
+
+          <div className="absolute inset-x-0 top-16 flex items-start justify-between px-8 pt-safe">
+            <div className="glass flex items-center gap-3 rounded-rava-lg p-4">
+              <div className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+              <span className="text-rava-xs font-black uppercase text-white/60">Live Vision Session</span>
+            </div>
+            <div className="text-right">
+              <h2 className="mb-1 text-rava-lg font-black text-white">چشم هوشمند راوا</h2>
+              <p className="text-rava-xs font-medium text-white/40">دوربین رو بگیر سمت هر چیزی تا برات توضیح بدم</p>
+            </div>
           </div>
         </motion.div>
       )}

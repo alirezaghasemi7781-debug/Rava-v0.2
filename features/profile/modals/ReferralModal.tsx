@@ -1,12 +1,8 @@
-
 import React, { useState } from 'react';
-import { motion as _motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Share2, Copy, Check, Loader2, Sparkles, UserPlus } from 'lucide-react';
-import { GlassCard } from '../../../components/core/GlassCard';
+import { Gift, Share2, Copy, Check, Sparkles, UserPlus } from 'lucide-react';
 import { useUserStore } from '../../../store/useUserStore';
 import { AudioGraph } from '../../../services/audioGraph';
-
-const motion = _motion as any;
+import { ModalShell, ModalCard, ModalHeader, Button, Input } from '../../../components/ui';
 
 interface ReferralModalProps {
   onClose: () => void;
@@ -17,6 +13,7 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose }) => {
   const [code, setCode] = useState('');
   const [claiming, setClaiming] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleCopy = () => {
     if (!wallet.referralCode) return;
@@ -27,102 +24,98 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose }) => {
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'دعوت‌نامه اختصاصی رهنما',
-          text: `رفیق، با این کد دعوت وارد اپلیکیشن رهنما شو تا هر دومون ۳۰ دقیقه شارژ هوش مصنوعی هدیه بگیریم! کد من: ${wallet.referralCode}`,
-          url: window.location.origin
-        });
-      } catch (e) {}
+    if (!navigator.share) return;
+    try {
+      await navigator.share({
+        title: 'دعوت‌نامه اختصاصی راوا',
+        text: `رفیق، با این کد دعوت وارد اپلیکیشن راوا شو تا هر دومون ۳۰ دقیقه شارژ هوش مصنوعی هدیه بگیریم! کد من: ${wallet.referralCode}`,
+        url: window.location.origin,
+      });
+    } catch {
+      // noop
     }
   };
 
   const handleClaim = async () => {
     if (!code.trim()) return;
     setClaiming(true);
+    setFeedback(null);
     try {
       await claimReferral(code.trim());
-      alert("ایول! ۳۰ دقیقه شارژ هدیه به حسابت واریز شد.");
-      onClose();
+      setFeedback({ type: 'success', message: 'ایول! ۳۰ دقیقه شارژ هدیه به حسابت واریز شد.' });
+      setTimeout(onClose, 1500);
     } catch (e: any) {
-      alert(e.message || "کد نامعتبر است.");
+      setFeedback({ type: 'error', message: e.message || 'کد نامعتبر است.' });
     } finally {
       setClaiming(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[6000] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm">
-        <GlassCard className="border-yellow-500/20 p-8 rounded-[4rem] relative overflow-hidden bg-gradient-to-br from-yellow-500/5 to-transparent">
-          <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12"><Gift size={150} className="text-yellow-500" /></div>
-          <button onClick={onClose} className="absolute top-6 left-6 text-white/20"><X /></button>
+    <ModalShell open={true} onClose={onClose} contentClassName="max-w-sm">
+      <ModalCard className="overflow-hidden border-rava-gold/20 bg-gradient-to-br from-rava-gold/5 to-transparent">
+        <div className="pointer-events-none absolute end-[-20px] top-[-20px] rotate-12 opacity-10">
+          <Gift size={140} className="text-rava-gold" />
+        </div>
 
-          <div className="flex flex-col items-center gap-3 mb-10 relative z-10">
-            <div className="w-16 h-16 bg-yellow-500 rounded-3xl flex items-center justify-center text-black shadow-2xl shadow-yellow-500/20">
-              <UserPlus size={32} />
+        <ModalHeader
+          icon={<UserPlus size={28} className="text-black" />}
+          title="دعوت از رفقا"
+          subtitle="برنامه دعوت ویژه"
+          onClose={onClose}
+          className="relative z-10 [&>div:last-child>div:first-child]:bg-rava-gold [&>div:last-child>div:first-child]:border-rava-gold/30"
+        />
+
+        <div className="relative z-10 space-y-6">
+          <section className="space-y-3">
+            <h4 className="text-center text-rava-xs font-black tracking-widest text-white/40">کد دعوت اختصاصی شما</h4>
+            <div className="glass flex flex-col items-center gap-4 rounded-rava-modal border-rava-gold/20 bg-white/[0.02] p-5">
+              <span className="font-mono text-3xl font-black tracking-[0.25em] text-white ltr-island" dir="ltr">
+                {wallet.referralCode || '------'}
+              </span>
+              <div className="flex w-full gap-2">
+                <Button variant="ghost" size="sm" className="flex-1 bg-white/5" onClick={handleCopy} leadingIcon={copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}>
+                  {copied ? 'کپی شد' : 'کپی کد'}
+                </Button>
+                <Button size="sm" className="flex-1" onClick={handleShare} leadingIcon={<Share2 size={14} />}>
+                  اشتراک
+                </Button>
+              </div>
             </div>
-            <h3 className="text-2xl font-black text-white">دعوت از رفقا</h3>
-            <p className="text-yellow-500 text-[9px] font-black uppercase tracking-[0.4em]">Elite Guest Program</p>
+          </section>
+
+          <div className="flex items-center gap-4">
+            <div className="h-px flex-1 bg-white/5" />
+            <span className="text-rava-xs font-black text-white/15">یا</span>
+            <div className="h-px flex-1 bg-white/5" />
           </div>
 
-          <div className="space-y-8 relative z-10">
-            {/* بخش کد خود کاربر */}
-            <div className="space-y-4">
-              <h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest text-center">کد دعوت اختصاصی شما</h4>
-              <div className="glass p-6 rounded-[2.5rem] border-yellow-500/20 flex flex-col items-center gap-4 bg-white/[0.02]">
-                 <span className="text-4xl font-black tracking-[0.3em] text-white font-mono uppercase">{wallet.referralCode || '------'}</span>
-                 <div className="flex gap-3 w-full">
-                    <button 
-                      onClick={handleCopy}
-                      className="flex-1 bg-white/5 py-3 rounded-2xl flex items-center justify-center gap-2 text-white/60 text-[10px] font-black active:scale-95 transition-all"
-                    >
-                      {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
-                      {copied ? 'کپی شد' : 'کپی کد'}
-                    </button>
-                    <button 
-                      onClick={handleShare}
-                      className="flex-1 bg-yellow-500 py-3 rounded-2xl flex items-center justify-center gap-2 text-black text-[10px] font-black active:scale-95 transition-all"
-                    >
-                      <Share2 size={14} /> اشتراک‌گذاری
-                    </button>
-                 </div>
-              </div>
+          {!wallet.isReferred ? (
+            <section className="space-y-3">
+              <h4 className="text-center text-rava-xs font-black tracking-widest text-white/40">کد معرف داری؟</h4>
+              <Input
+                ltr
+                placeholder="کد دعوت رو اینجا بزن..."
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                className="text-center font-mono font-black uppercase"
+              />
+              {feedback ? (
+                <p className={`text-center text-rava-xs font-bold ${feedback.type === 'success' ? 'text-green-400' : 'text-rava-danger'}`}>
+                  {feedback.message}
+                </p>
+              ) : null}
+              <Button fullWidth onClick={handleClaim} disabled={claiming || !code} loading={claiming} leadingIcon={!claiming ? <Sparkles size={16} /> : undefined}>
+                ثبت کد و دریافت جایزه
+              </Button>
+            </section>
+          ) : (
+            <div className="rounded-rava-lg border border-green-500/20 bg-green-500/10 p-4 text-center">
+              <p className="text-rava-xs font-black text-green-400">شما قبلاً پاداش دعوت را دریافت کرده‌اید ✨</p>
             </div>
-
-            <div className="flex items-center gap-4">
-               <div className="h-px flex-1 bg-white/5" />
-               <span className="text-white/10 font-black text-[9px] uppercase tracking-widest">OR</span>
-               <div className="h-px flex-1 bg-white/5" />
-            </div>
-
-            {/* بخش وارد کردن کد معرف */}
-            {!wallet.isReferred ? (
-              <div className="space-y-4">
-                <h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest text-center">کد معرف داری؟</h4>
-                <div className="relative">
-                  <input 
-                    placeholder="کد دعوت رو اینجا بزن..."
-                    value={code} onChange={e => setCode(e.target.value.toUpperCase())}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-center text-white font-mono font-black uppercase outline-none focus:border-yellow-500/40 transition-all"
-                  />
-                  <button 
-                    onClick={handleClaim} disabled={claiming || !code}
-                    className="w-full mt-3 bg-white text-black py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-30"
-                  >
-                    {claiming ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={16} /> ثبت کد و دریافت جایزه</>}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-center">
-                 <p className="text-green-500 font-black text-[10px] uppercase">شما قبلاً پاداش دعوت را دریافت کرده‌اید ✨</p>
-              </div>
-            )}
-          </div>
-        </GlassCard>
-      </motion.div>
-    </div>
+          )}
+        </div>
+      </ModalCard>
+    </ModalShell>
   );
 };

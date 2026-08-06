@@ -1,7 +1,7 @@
 
-const CACHE_NAME = 'rahnam-golden-v1.2';
-const DYNAMIC_CACHE = 'rahnam-dynamic-v1';
-const MEDIA_CACHE = 'rahnam-media-v1'; // مخصوص فایل‌های صوتی روایت‌ها
+const CACHE_NAME = 'rava-golden-v1.2';
+const DYNAMIC_CACHE = 'rava-dynamic-v1';
+const MEDIA_CACHE = 'rava-media-v1'; // مخصوص فایل‌های صوتی روایت‌ها
 const MAX_DYNAMIC_ITEMS = 50; 
 
 // تابع کمکی برای محدود کردن حجم کش

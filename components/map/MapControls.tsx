@@ -1,18 +1,20 @@
-
-import React from 'react';
+﻿import React from 'react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Navigation, Layers } from 'lucide-react';
+import { Sparkles, Navigation, Layers, Route, X } from 'lucide-react';
 import { useDiscoveryStore } from '../../store/useDiscoveryStore';
 import { useMapStore } from '../../store/useMapStore';
+import { useRouteStore } from '../../store/useRouteStore';
 import { useMap } from '@vis.gl/react-google-maps';
 import { AudioGraph } from '../../services/audioGraph';
 
 const motion = _motion as any;
+const controlClass = 'relative flex h-14 w-14 min-h-tap min-w-tap flex-col items-center justify-center rounded-rava-xl border shadow-glass transition-all duration-500';
 
 export const MapControls: React.FC = () => {
   const map = useMap();
   const { showCurated, toggleShowCurated } = useDiscoveryStore();
-  const { userLocation } = useMapStore();
+  const { userLocation, locationPermissionDenied, mapsLoadError, setMapsLoadError, setLocationPermissionDenied } = useMapStore();
+  const { isActive, route, mode, setMode, recalculate, cancelRoute, isCalculating, error } = useRouteStore();
 
   const handleToggle = () => {
     AudioGraph.getInstance().playTickSound();
@@ -27,42 +29,88 @@ export const MapControls: React.FC = () => {
     map.setZoom(15);
   };
 
+  const cycleMode = () => {
+    const order: Array<'walking' | 'driving' | 'transit'> = ['walking', 'driving', 'transit'];
+    const next = order[(order.indexOf(mode) + 1) % order.length];
+    setMode(next);
+    recalculate();
+  };
+
+  const modeLabel = mode === 'walking' ? 'پیاده' : mode === 'driving' ? 'خودرو' : 'حمل‌ونقل';
+
   return (
     <div className="absolute left-6 top-24 z-[1000] flex flex-col gap-4">
-      {/* دکمه لایه هوشمند رهنما */}
-      <button 
-        onClick={handleToggle}
-        className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all duration-500 border shadow-2xl relative group ${
-          showCurated 
-          ? 'bg-yellow-500 border-yellow-400 text-black shadow-[0_0_30px_rgba(234,179,8,0.4)]' 
-          : 'bg-black/40 backdrop-blur-xl border-white/10 text-white/40 hover:text-white hover:border-white/20'
-        }`}
-      >
-        <Sparkles size={22} className={showCurated ? 'animate-pulse' : ''} />
-        <span className="text-[7px] font-black mt-1 uppercase tracking-tighter">Gems</span>
-        
-        {/* Tooltip اختصاصی */}
-        <div className="absolute right-full mr-4 glass px-3 py-1.5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-           <span className="text-white text-[9px] font-bold">نمایش لایه رهنما</span>
+      {(mapsLoadError || locationPermissionDenied) && (
+        <div className="absolute left-16 top-0 w-56 space-y-1 rounded-rava-xl border border-red-500/30 glass px-3 py-2.5">
+          {mapsLoadError && (
+            <button type="button" className="w-full text-right" onClick={() => setMapsLoadError(null)}>
+              <p className="text-rava-xs font-bold leading-relaxed text-red-300">{mapsLoadError}</p>
+            </button>
+          )}
+          {locationPermissionDenied && (
+            <button type="button" className="w-full text-right" onClick={() => setLocationPermissionDenied(false)}>
+              <p className="text-rava-xs font-bold leading-relaxed text-amber-300">دسترسی موقعیت قطع است. از تنظیمات مرورگر GPS را فعال کن.</p>
+            </button>
+          )}
+        </div>
+      )}
+
+      <button type="button" onClick={handleToggle} aria-label="نمایش مکان‌های راوا" className={`${controlClass} group ${showCurated ? 'border-yellow-400 bg-rava-gold text-black shadow-[0_0_30px_rgba(234,179,8,0.4)]' : 'border-white/10 bg-black/40 text-white/40 backdrop-blur-xl hover:border-white/20 hover:text-white'}`}>
+        <Sparkles size={20} className={showCurated ? 'animate-pulse' : ''} />
+        <span className="mt-1 text-rava-xs font-black tracking-tight">جواهر</span>
+        <div className="pointer-events-none absolute right-full mr-4 rounded-rava-md glass px-3 py-1.5 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
+          <span className="text-rava-xs font-bold text-white">نمایش لایه راوا</span>
         </div>
       </button>
 
-      {/* دکمه موقعیت من */}
-      <button 
-        onClick={handleRecenter}
-        className="w-14 h-14 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex flex-col items-center justify-center text-white/60 hover:text-white active:scale-90 transition-all shadow-2xl"
-      >
-        <Navigation size={22} />
-        <span className="text-[7px] font-black mt-1 uppercase tracking-tighter">Locate</span>
+      <button type="button" onClick={handleRecenter} aria-label="موقعیت من" className={`${controlClass} border-white/10 bg-black/40 text-white/60 backdrop-blur-xl hover:text-white`}>
+        <Navigation size={20} />
+        <span className="mt-1 text-rava-xs font-black tracking-tight">من</span>
       </button>
 
-      {/* دکمه تغییر نوع نقشه (Placeholder برای فازهای بعدی) */}
-      <button 
-        className="w-14 h-14 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex flex-col items-center justify-center text-white/20 cursor-not-allowed"
-      >
-        <Layers size={22} />
-        <span className="text-[7px] font-black mt-1 uppercase tracking-tighter">Hybrid</span>
+      {isActive && (
+        <>
+          <button type="button" onClick={cycleMode} disabled={isCalculating} aria-label="تغییر حالت مسیر" className={`${controlClass} border-yellow-400 bg-rava-gold text-black shadow-[0_0_30px_rgba(234,179,8,0.35)]`}>
+            <Route size={20} className={isCalculating ? 'animate-pulse' : ''} />
+            <span className="mt-1 text-rava-xs font-black tracking-tight">{modeLabel}</span>
+          </button>
+          <button type="button" onClick={() => { AudioGraph.getInstance().playTickSound(); cancelRoute(); }} aria-label="لغو مسیر" className={`${controlClass} border-red-400 bg-red-500/90 text-white`}>
+            <X size={20} />
+            <span className="mt-1 text-rava-xs font-black tracking-tight">توقف</span>
+          </button>
+        </>
+      )}
+
+      <button type="button" disabled aria-label="لایه ترکیبی (به‌زودی)" className={`${controlClass} cursor-not-allowed border-white/10 bg-black/40 text-white/20 backdrop-blur-xl`}>
+        <Layers size={20} />
+        <span className="mt-1 text-rava-xs font-black tracking-tight">ترکیبی</span>
       </button>
+
+      <AnimatePresence>
+        {isActive && (route || error || isCalculating) && (
+          <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className={`absolute left-16 top-0 min-w-[140px] max-w-[220px] rounded-rava-xl glass px-4 py-3 ${error ? 'border-red-500/40' : 'border-rava-gold/30'}`}>
+            {isCalculating && !route && !error && (
+              <>
+                <p className="mb-1 text-rava-xs font-black tracking-widest text-rava-gold">مسیر راوا</p>
+                <p className="text-rava-sm font-bold text-white/70">در حال محاسبه...</p>
+              </>
+            )}
+            {route && !error && (
+              <>
+                <p className="mb-1 text-rava-xs font-black tracking-widest text-rava-gold">مسیر راوا</p>
+                <p className="text-rava-base font-black text-white">{route.durationText}</p>
+                <p className="text-rava-sm font-bold text-white/50">{route.distanceText}</p>
+              </>
+            )}
+            {error && (
+              <>
+                <p className="mb-1 text-rava-xs font-black tracking-widest text-red-400">خطای مسیر</p>
+                <p className="text-rava-xs font-bold leading-relaxed text-red-200">{error}</p>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

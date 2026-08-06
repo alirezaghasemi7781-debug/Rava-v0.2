@@ -1,17 +1,17 @@
-
-import React, { useMemo, useEffect } from 'react';
+﻿import React, { useMemo, useEffect } from 'react';
 import { MainMap } from '../components/map/MainMap';
 import { TopBar } from '../components/layout/TopBar';
 import { BottomBar } from '../components/layout/BottomBar';
+import { CityPickerModal } from '../components/layout/CityPickerModal';
 import { MagicButton } from '../components/voice/MagicButton';
 import { VisionOverlay } from '../components/camera/VisionOverlay';
 import { POIController } from '../components/poi/POIController';
 import { useUIStore } from '../store/useUIStore';
+import { useRouteStore } from '../store/useRouteStore';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 import { Camera } from 'lucide-react';
 import { AppTab } from '../types';
 
-// Pages
 import { Explore } from './Explore';
 import { MyTrip } from './MyTrip';
 import { Tools } from './Tools';
@@ -24,44 +24,54 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ defaultTab }) => {
-  const activeTab = useUIStore(s => s.activeTab);
-  const setActiveTab = useUIStore(s => s.setActiveTab);
-  const setShowVision = useUIStore(s => s.setShowVision);
+  const activeTab = useUIStore((s) => s.activeTab);
+  const setActiveTab = useUIStore((s) => s.setActiveTab);
+  const setShowVision = useUIStore((s) => s.setShowVision);
+  const routeActive = useRouteStore((s) => s.isActive);
 
   useEffect(() => {
-    if (defaultTab) {
-      setActiveTab(defaultTab);
-    }
+    setActiveTab(defaultTab ?? 'home');
   }, [defaultTab, setActiveTab]);
 
+  const mapInteractive = activeTab === 'home' || routeActive;
+
   const overlayContent = useMemo(() => {
-    switch(activeTab) {
-      case 'explore': return <Explore />;
-      case 'wallet': return <MyTrip />;
-      case 'tools': return <Tools />;
-      case 'profile': return <Profile />;
-      default: return null;
+    switch (activeTab) {
+      case 'explore':
+        return <Explore />;
+      case 'trip':
+        return <MyTrip />;
+      case 'tools':
+        return <Tools />;
+      case 'profile':
+        return <Profile />;
+      default:
+        return null;
     }
   }, [activeTab]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-black text-right">
+    <div className="relative h-screen w-screen overflow-hidden bg-rava-bg text-right text-rava-fg">
       <TopBar />
-      
-      <div className={`absolute inset-0 z-0 transition-opacity duration-700 ${activeTab === 'home' ? 'opacity-100' : 'opacity-20 pointer-events-none'}`}>
+
+      <div
+        className={`absolute inset-0 z-0 transition-opacity duration-500 ${
+          mapInteractive ? 'opacity-100' : 'pointer-events-none opacity-20'
+        }`}
+      >
         <MainMap />
       </div>
 
-      <main className="relative z-10 w-full h-full pointer-events-none text-right">
+      <main className="relative z-10 h-full w-full pointer-events-none text-right">
         <AnimatePresence mode="wait">
           {activeTab !== 'home' && (
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              transition={{ type: "spring", damping: 30, stiffness: 250 }}
-              className="w-full h-full pt-16 pb-32 pointer-events-auto bg-black/70 backdrop-blur-xl"
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 250 }}
+              className="h-full w-full bg-black/70 pt-[var(--chrome-top)] pointer-events-auto backdrop-blur-xl"
             >
               {overlayContent}
             </motion.div>
@@ -72,22 +82,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ defaultTab }) => {
       <AnimatePresence>
         {activeTab === 'home' && (
           <motion.div
-            initial={{ opacity: 0, y: 100 }}
+            initial={{ opacity: 0, y: 80 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 100 }}
+            exit={{ opacity: 0, y: 80 }}
             className="contents"
           >
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.5 }}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.75 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.5 }}
-              className="fixed bottom-36 right-6 z-[1501] pointer-events-none"
+              exit={{ opacity: 0, scale: 0.75 }}
+              className="fixed end-6 z-[1501] pointer-events-none"
+              style={{ bottom: 'calc(var(--magic-button-bottom) + 4.5rem)' }}
             >
-              <button 
+              <button
                 onClick={() => setShowVision(true)}
-                className="w-16 h-16 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[1.8rem] flex items-center justify-center text-white shadow-2xl active:scale-90 transition-transform pointer-events-auto group"
+                className="pointer-events-auto flex min-h-tap min-w-tap items-center justify-center rounded-rava-xl border border-white/20 bg-white/10 p-4 text-white shadow-glass backdrop-blur-2xl transition-transform active:scale-90 group"
+                aria-label="باز کردن دوربین"
               >
-                <Camera size={28} className="group-hover:text-yellow-500 transition-colors" />
+                <Camera size={24} className="transition-colors group-hover:text-rava-gold" />
               </button>
             </motion.div>
 
@@ -99,6 +111,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ defaultTab }) => {
       <BottomBar />
       <POIController />
       <VisionOverlay />
+      <CityPickerModal />
     </div>
   );
 };

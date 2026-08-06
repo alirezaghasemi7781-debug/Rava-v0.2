@@ -1,15 +1,14 @@
 
 import React from 'react';
 import { motion as _motion } from 'framer-motion';
-import { CheckCircle2, MapPin } from 'lucide-react';
-import { GlassCard } from '../../../components/core/GlassCard';
+import { Check, MapPin } from 'lucide-react';
 import { CityMode } from '../../../types';
 
 const motion = _motion as any;
 
 const CITIES = [
-  { id: 'Istanbul', name: 'استانبول', desc: 'شهر رنگ‌ها و طعم‌های شرقی', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&q=75&w=800' },
-  { id: 'Dubai', name: 'دبی', desc: 'تجربه دنیای مدرن و لوکس', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&q=75&w=800' }
+  { id: 'Istanbul' as CityMode, name: 'استانبول', desc: 'شهر رنگ‌ها و طعم‌های شرقی', img: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&q=75&w=600' },
+  { id: 'Dubai' as CityMode, name: 'دبی', desc: 'تجربه دنیای مدرن و لوکس', img: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&q=75&w=600' },
 ];
 
 interface CityStepProps {
@@ -18,48 +17,50 @@ interface CityStepProps {
 }
 
 export const CityStep: React.FC<CityStepProps> = ({ selectedCity, onSelect }) => (
-  <motion.div 
-    initial={{ opacity: 0, x: -20 }} 
-    animate={{ opacity: 1, x: 0 }} 
-    exit={{ opacity: 0, x: 20 }} 
-    className="space-y-10"
+  <motion.div
+    initial={{ opacity: 0, x: -16 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: 16 }}
+    className="space-y-6"
   >
-    <div className="text-right space-y-2">
-      <h1 className="text-4xl font-black text-white leading-tight">کجا قراره خاطره بسازیم؟</h1>
-      <p className="text-white/40 text-sm font-bold">مقصد سفرت رو انتخاب کن رفیق.</p>
+    <div className="text-right space-y-1.5">
+      <h1 className="rava-page-title text-2xl leading-snug">کجا قراره خاطره بسازیم؟</h1>
+      <p className="rava-page-subtitle">مقصد سفرت رو انتخاب کن.</p>
     </div>
-    
-    <div className="grid grid-cols-1 gap-5 pb-4">
-      {CITIES.map(city => (
-        <button 
-          key={city.id} 
-          onClick={() => onSelect(city.id)}
-          className="relative w-full text-left outline-none group"
-        >
-          <GlassCard className={`relative overflow-hidden h-52 p-0 border-white/5 transition-all duration-500 ${selectedCity === city.id ? 'ring-2 ring-yellow-500 scale-[1.02]' : 'opacity-70 grayscale-[0.3]'}`}>
-            <img src={city.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[5000ms] group-hover:scale-110" alt={city.name} />
-            <div className="absolute inset-0 bg-gradient-to-l from-black/95 via-black/40 to-transparent" />
-            
-            <div className="relative z-10 h-full flex flex-col justify-end p-8 text-right space-y-1">
-              <div className="flex items-center justify-end gap-2 text-yellow-500">
-                <h3 className="text-3xl font-black text-white">{city.name}</h3>
-                <MapPin size={20} />
-              </div>
-              <p className="text-white/60 font-bold text-xs">{city.desc}</p>
-            </div>
 
-            {selectedCity === city.id && (
-              <motion.div 
-                initial={{ scale: 0, opacity: 0 }} 
-                animate={{ scale: 1, opacity: 1 }}
-                className="absolute top-6 left-6 text-yellow-500"
-              >
-                <CheckCircle2 size={32} />
-              </motion.div>
-            )}
-          </GlassCard>
-        </button>
-      ))}
+    <div className="grid grid-cols-2 gap-3 pb-2">
+      {CITIES.map((city) => {
+        const selected = selectedCity === city.id;
+        return (
+          <button
+            key={city.id}
+            type="button"
+            onClick={() => onSelect(city.id)}
+            className={`relative overflow-hidden rounded-rava-xl text-right outline-none transition-all active:scale-[0.98] ${
+              selected
+                ? 'ring-2 ring-rava-gold/80 shadow-[0_0_20px_rgba(234,179,8,0.15)]'
+                : 'ring-1 ring-white/10 opacity-90'
+            }`}
+          >
+            <div className="aspect-[4/3] relative">
+              <img src={city.img} className="absolute inset-0 w-full h-full object-cover" alt="" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 inset-x-0 p-3">
+                <div className="mb-0.5 flex items-center justify-end gap-1 text-rava-gold">
+                  <span className="text-rava-sm font-black text-white">{city.name}</span>
+                  <MapPin size={14} />
+                </div>
+                <p className="text-rava-xs font-bold leading-snug text-white/55">{city.desc}</p>
+              </div>
+              {selected && (
+                <div className="absolute start-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rava-gold text-black">
+                  <Check size={14} strokeWidth={3} />
+                </div>
+              )}
+            </div>
+          </button>
+        );
+      })}
     </div>
   </motion.div>
 );

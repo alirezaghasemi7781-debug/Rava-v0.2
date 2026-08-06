@@ -1,18 +1,23 @@
-
 import { APIProvider, Map as GoogleMap, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useUserStore } from '../../store/useUserStore';
 import { useMapStore } from '../../store/useMapStore';
 import { useDiscoveryStore } from '../../store/useDiscoveryStore';
+import { useRouteStore } from '../../store/useRouteStore';
 import { PlaceService } from '../../services/placeService';
+import { selectPOI } from '../../services/poiSelectionService';
+import { cityPackService } from '../../services/cityPack';
 import { GeoPoint } from '../../utils/geoPoint';
 import { Footprints as StepIcon, Star } from 'lucide-react';
 import { APP_CONFIG } from '../../config';
 import { MapControls } from './MapControls';
 
-const CuratedMarker = React.memo(({ poi, onClick }: { 
+declare const google: any;
+
+const CuratedMarker = React.memo(({ poi, onClick, isActive }: { 
   poi: any, 
-  onClick: (e: any) => void 
+  onClick: (e: any) => void,
+  isActive?: boolean,
 }) => {
   const position = useMemo(() => {
     const lat = Number(poi.lat);
@@ -30,26 +35,29 @@ const CuratedMarker = React.memo(({ poi, onClick }: {
     <AdvancedMarker 
       position={position} 
       onClick={onClick}
-      zIndex={1000}
+      zIndex={isActive ? 2000 : 1000}
       anchorLeft="-50%"
       anchorTop="-50%"
     >
-      <div className="relative cursor-pointer transition-transform active:scale-95 group">
-        <div className="bg-white p-1 rounded-full shadow-[0_0_30px_rgba(234,179,8,0.6)] border-2 border-yellow-500 group-hover:scale-110 transition-transform">
-          <div className="bg-yellow-500 p-2 rounded-full">
-             <Star size={18} className="text-black fill-current" />
+      <div className={`relative cursor-pointer transition-transform active:scale-95 group ${isActive ? 'scale-125' : ''}`}>
+        <div className={`rounded-full border-2 border-rava-gold bg-white p-1 transition-transform group-hover:scale-110 ${
+          isActive ? 'shadow-[0_0_40px_rgba(234,179,8,0.9)] ring-2 ring-rava-gold/50' : 'shadow-[0_0_30px_rgba(234,179,8,0.6)]'
+        }`}>
+          <div className="rounded-full bg-rava-gold p-2">
+             <Star size={18} className="fill-current text-black" />
           </div>
         </div>
-        <div className="absolute -bottom-8 start-1/2 -translate-x-1/2 glass px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000] pointer-events-none text-black">
-           <span className="text-[10px] font-black">{poi.name}</span>
+        <div className="pointer-events-none absolute -bottom-8 start-1/2 z-[1000] -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 opacity-0 transition-opacity group-hover:opacity-100 glass text-black">
+           <span className="text-rava-xs font-black">{poi.name}</span>
         </div>
       </div>
     </AdvancedMarker>
   );
 });
 
-const FootprintMarker = React.memo(({ fp }: { 
-  fp: any
+const FootprintMarker = React.memo(({ fp, onClick }: { 
+  fp: any,
+  onClick?: () => void,
 }) => {
   const position = useMemo(() => {
     const lat = Number(fp.lat);
@@ -62,63 +70,92 @@ const FootprintMarker = React.memo(({ fp }: {
     <AdvancedMarker 
       position={position}
       zIndex={500}
+      onClick={onClick}
     >
-      <div className={`relative transition-all ${fp.is_verified === false ? 'opacity-40 grayscale-[0.5]' : 'opacity-80'}`}>
+      <div className={`relative transition-all cursor-pointer active:scale-90 ${fp.is_verified === false ? 'opacity-40 grayscale-[0.5]' : 'opacity-80'}`}>
         <div className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-xl">
-          <StepIcon size={14} className={fp.is_verified === false ? 'text-white' : 'text-yellow-500'} />
+          <StepIcon size={14} className={fp.is_verified === false ? 'text-white' : 'text-rava-gold'} />
         </div>
       </div>
     </AdvancedMarker>
   );
 });
 
+const RoutePolyline = () => {
+  const map = useMap();
+  const path = useRouteStore((s) => s.route?.path);
+  const polylineRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!map || typeof google === 'undefined') return;
+
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+      polylineRef.current = null;
+    }
+
+    if (!path || path.length < 2) return;
+
+    polylineRef.current = new google.maps.Polyline({
+      path,
+      geodesic: true,
+      strokeColor: '#EAB308',
+      strokeOpacity: 0.95,
+      strokeWeight: 5,
+      map,
+    });
+
+    try {
+      const bounds = new google.maps.LatLngBounds();
+      path.forEach((p) => bounds.extend(p));
+      map.fitBounds(bounds, 80);
+    } catch {
+      /* noop */
+    }
+
+    return () => {
+      if (polylineRef.current) {
+        polylineRef.current.setMap(null);
+        polylineRef.current = null;
+      }
+    };
+  }, [map, path]);
+
+  return null;
+};
+
 const MapController = () => {
   const map = useMap();
   const { cityMode, setCityMode } = useUserStore(); 
   const { fetchCurated } = useDiscoveryStore();
   const { setUserLocation } = useMapStore();
-  const { setActivePOI, setFullDetailPOI, setLoadingDetails } = useMapStore();
   
   const processingClickRef = useRef<boolean>(false);
   const isCityInitialized = useRef<boolean>(false);
 
-  // ۱. مدیریت مقدار اولیه شهر (فقط یک بار در شروع)
   useEffect(() => {
     if (!cityMode && !isCityInitialized.current) {
-        console.log("[MapController] Initializing default city: Istanbul");
         isCityInitialized.current = true;
         setCityMode('Istanbul');
     }
   }, [cityMode, setCityMode]);
 
-  // ۲. مدیریت Native Event Listener
   useEffect(() => {
     if (!map) return;
 
-    // console.debug("[MapController] Attaching native listener");
-
     const clickListener = map.addListener('click', async (e: any) => {
       if (e.placeId) {
-        // console.debug("[MapController] POI Click:", e.placeId);
         e.stop(); 
 
         if (processingClickRef.current) return;
         processingClickRef.current = true;
 
         try {
-          setLoadingDetails(true);
-          setFullDetailPOI(null);
-          setActivePOI({ id: e.placeId, name: "در حال شناسایی...", lat: 0, lng: 0, category: 'loading' } as any);
-
-          const essentials = await PlaceService.fetchEssentials(e.placeId);
-          const geo = new GeoPoint(essentials.lat || 0, essentials.lng || 0);
-          
-          setActivePOI({ ...essentials, id: e.placeId, lat: geo.lat, lng: geo.lng } as any);
-        } catch (err) {
-          console.error("[MapController] Error:", err);
-          setActivePOI(null);
+          await selectPOI(
+            { id: e.placeId, name: 'در حال شناسایی...', category: 'loading', lat: 0, lng: 0, isGooglePOI: true },
+            { source: 'google', map, fetchEssentials: true },
+          );
         } finally {
-          setLoadingDetails(false);
           setTimeout(() => { processingClickRef.current = false; }, 500);
         }
       }
@@ -127,16 +164,14 @@ const MapController = () => {
     return () => {
       if (clickListener) google.maps.event.removeListener(clickListener);
     };
-  }, [map, setActivePOI, setFullDetailPOI, setLoadingDetails]);
+  }, [map]);
 
-  // ۳. مدیریت تغییر شهر و فچ کردن دیتا
   useEffect(() => {
     if (!map || !cityMode) return;
 
     PlaceService.init();
-    // console.log(`[MapController] Active City: ${cityMode}`);
-    
     fetchCurated(cityMode).catch(err => console.error("Fetch curated failed:", err));
+    cityPackService.onCityChange(cityMode).catch(() => {});
     
     const center = cityMode === 'Istanbul' 
       ? new GeoPoint(41.0082, 28.9784) 
@@ -147,7 +182,6 @@ const MapController = () => {
     
   }, [cityMode, map, fetchCurated]);
 
-  // ۴. مدیریت Geolocation
   useEffect(() => {
     if (!navigator.geolocation) return;
 
@@ -155,15 +189,17 @@ const MapController = () => {
       const watchId = navigator.geolocation.watchPosition(
         (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
         (err) => {
-          if (err.code !== 1) { 
-             console.warn("Geolocation error:", err);
+          if (err.code === 1) {
+            useMapStore.getState().setLocationPermissionDenied(true);
+          } else {
+            console.warn('Geolocation error:', err);
           }
         },
         { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
       );
       return () => navigator.geolocation.clearWatch(watchId);
     } catch (e) {
-      // console.error("Geolocation setup failed:", e);
+      /* noop */
     }
   }, [setUserLocation]);
 
@@ -171,28 +207,43 @@ const MapController = () => {
 };
 
 const GOOGLE_LIBRARIES: ("places" | "marker")[] = ['places', 'marker'];
-
-/** Rollback: if quarterly misbehaves after a mid-quarter Google roll, set version to a numbered pin (e.g. "3.64" or "3.65"). */
 const MAPS_JS_VERSION = 'quarterly';
 
 const handleMapsApiError = (error: unknown) => {
   console.error('[MainMap] Google Maps JavaScript API failed to load:', error);
+  useMapStore.getState().setMapsLoadError(
+    'نقشه لود نشد. اتصال اینترنت و کلید Google Maps را بررسی کن.'
+  );
 };
 
 export const MainMap: React.FC = () => {
   const { curatedPlaces, showCurated } = useDiscoveryStore();
-  const { nearbyFootprints, pendingFootprints, userLocation, setActivePOI, setFullDetailPOI } = useMapStore();
+  const { nearbyFootprints, pendingFootprints, userLocation, activePOI, fullDetailPOI } = useMapStore();
   
+  const activeId = fullDetailPOI?.id || activePOI?.id;
+
   const visibleCurated = useMemo(() => {
     if (!showCurated) return [];
     return curatedPlaces;
   }, [showCurated, curatedPlaces]);
 
   const handleCuratedClick = useCallback((poi: any) => {
-    // console.log("Curated Click:", poi.name);
-    setFullDetailPOI(null);
-    setActivePOI(poi);
-  }, [setFullDetailPOI, setActivePOI]);
+    selectPOI(poi, { source: 'curated', fetchEssentials: false, map: null });
+  }, []);
+
+  const handleFootprintClick = useCallback((fp: any) => {
+    selectPOI(
+      {
+        id: fp.place_id || fp.id,
+        name: fp.place_name || fp.user || 'ردپا',
+        lat: Number(fp.lat) || 0,
+        lng: Number(fp.lng) || 0,
+        category: 'footprint',
+        description: fp.text,
+      },
+      { source: 'footprint', fetchEssentials: !!fp.place_id },
+    );
+  }, []);
 
   const userGeo = useMemo(() => GeoPoint.fromArray(userLocation), [userLocation]);
 
@@ -215,11 +266,14 @@ export const MainMap: React.FC = () => {
           colorScheme="DARK"
         >
           <MapController />
+          <RoutePolyline />
+          <MapPanOnSelect />
           
           {visibleCurated.map(poi => (
             <CuratedMarker 
               key={poi.id} 
               poi={poi} 
+              isActive={activeId === poi.id}
               onClick={() => handleCuratedClick(poi)} 
             />
           ))}
@@ -227,7 +281,8 @@ export const MainMap: React.FC = () => {
           {[...nearbyFootprints, ...(pendingFootprints || [])].map(fp => (
             <FootprintMarker 
               key={fp.id} 
-              fp={fp} 
+              fp={fp}
+              onClick={() => handleFootprintClick(fp)}
             />
           ))}
 
@@ -247,4 +302,21 @@ export const MainMap: React.FC = () => {
       </APIProvider>
     </div>
   );
+};
+
+/** Pan map when active POI gains real coordinates. */
+const MapPanOnSelect = () => {
+  const map = useMap();
+  const activePOI = useMapStore((s) => s.activePOI);
+  const lastId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!map || !activePOI) return;
+    if (activePOI.lat === 0 && activePOI.lng === 0) return;
+    if (lastId.current === activePOI.id) return;
+    lastId.current = activePOI.id;
+    map.panTo({ lat: activePOI.lat, lng: activePOI.lng });
+  }, [map, activePOI]);
+
+  return null;
 };

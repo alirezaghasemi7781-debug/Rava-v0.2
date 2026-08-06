@@ -1,81 +1,98 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { motion as _motion } from 'framer-motion';
 import { Globe, MapPin, Sparkles } from 'lucide-react';
 import { useUserStore } from '../../store/useUserStore';
+import { PassportPage } from '../social/PassportPage';
+import { AudioGraph } from '../../services/audioGraph';
+import { FullPageOverlay } from '../ui';
 
 const motion = _motion as any;
 
 export const PassportCard: React.FC = () => {
   const { wallet } = useUserStore();
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative h-64 bg-[#111] rounded-[3.5rem] overflow-hidden border border-white/10 shadow-2xl group selection:bg-yellow-500/30">
-      {/* Background Texture */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-      
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-500/5 to-transparent pointer-events-none" />
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          AudioGraph.getInstance().playTickSound();
+          setOpen(true);
+        }}
+        className="group relative h-64 w-full overflow-hidden rounded-rava-modal border border-white/10 bg-rava-elevated text-left shadow-2xl transition-transform active:scale-[0.99] selection:bg-rava-gold/30"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
+        />
 
-      {/* Passport Content - RTL Natural Flow */}
-      <div className="relative h-full p-8 flex flex-col justify-between">
-        <div className="flex justify-between items-start">
-          {/* راست: اطلاعات هدر */}
-          <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-yellow-500 shadow-lg">
-               <Globe size={24} />
-             </div>
-             <div className="text-right">
-               <h4 className="text-white font-black text-lg uppercase tracking-wider leading-none">DIGITAL PASSPORT</h4>
-               <p className="text-yellow-500/50 text-[7px] font-black uppercase tracking-[0.4em] mt-1.5">Islamic Republic of Rahnam</p>
-             </div>
-          </div>
-          
-          {/* چپ: المان تزئینی */}
-          <div className="w-10 h-14 bg-white/5 rounded-lg border border-white/10 flex flex-col items-center justify-center gap-1 opacity-40">
-             <div className="w-6 h-0.5 bg-white/20 rounded-full" />
-             <div className="w-4 h-0.5 bg-white/20 rounded-full" />
-             <div className="w-5 h-0.5 bg-white/20 rounded-full" />
-          </div>
-        </div>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-rava-gold/5 to-transparent" />
 
-        {/* Stamps Row - RTL Flow */}
-        <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-          {wallet.stamps.length === 0 ? (
-            <div className="w-full flex items-center justify-center py-4 border border-dashed border-white/10 rounded-2xl opacity-20">
-               <span className="text-[10px] font-black uppercase tracking-[0.2em]">No Active Visas Found</span>
+        <div className="relative flex h-full flex-col justify-between p-8">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-rava-lg border border-white/10 bg-white/5 text-rava-gold shadow-lg">
+                <Globe size={24} />
+              </div>
+              <div className="text-right">
+                <h4 className="text-rava-lg font-black uppercase leading-none tracking-wider text-white">DIGITAL PASSPORT</h4>
+                <p className="mt-1.5 text-rava-xs font-black uppercase tracking-[0.4em] text-rava-gold/50">Rava / راوا Digital ID</p>
+              </div>
             </div>
-          ) : (
-            wallet.stamps.slice(0, 4).map((stamp, i) => (
-              <motion.div 
-                key={stamp.id}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: i * 0.1 }}
-                className="w-20 h-20 shrink-0 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col items-center justify-center p-2 relative"
-              >
-                <div className="absolute top-1.5 left-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500/30" />
-                <MapPin size={20} className="text-white/20 mb-1" />
-                <span className="text-[8px] font-black text-white/80 text-center leading-tight truncate w-full px-1">{stamp.placeName}</span>
-              </motion.div>
-            ))
-          )}
-          {wallet.stamps.length > 4 && (
-            <div className="w-20 h-20 shrink-0 rounded-2xl glass border-yellow-500/20 flex items-center justify-center text-yellow-500 font-black text-xs shadow-lg">
-              +{wallet.stamps.length - 4}
-            </div>
-          )}
-        </div>
 
-        {/* Footer Info */}
-        <div className="flex justify-between items-center opacity-40">
-          <Sparkles size={14} className="text-yellow-500" />
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-            <span className="text-[9px] font-black text-white tracking-widest uppercase">Member Since 2026</span>
+            <div className="flex h-14 w-10 flex-col items-center justify-center gap-1 rounded-rava-md border border-white/10 bg-white/5 opacity-40">
+              <div className="h-0.5 w-6 rounded-full bg-white/20" />
+              <div className="h-0.5 w-4 rounded-full bg-white/20" />
+              <div className="h-0.5 w-5 rounded-full bg-white/20" />
+            </div>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+            {wallet.stamps.length === 0 ? (
+              <div className="flex w-full items-center justify-center rounded-rava-lg border border-dashed border-white/10 py-4 opacity-20">
+                <span className="text-rava-xs font-black uppercase tracking-[0.2em]">No Active Visas Found</span>
+              </div>
+            ) : (
+              wallet.stamps.slice(0, 4).map((stamp, i) => (
+                <motion.div
+                  key={stamp.id}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: i * 0.1 }}
+                  className="relative flex h-20 w-20 shrink-0 flex-col items-center justify-center rounded-rava-lg border border-white/10 bg-white/[0.03] p-2"
+                >
+                  <div className="absolute start-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500/30" />
+                  <MapPin size={20} className="mb-1 text-white/20" />
+                  <span className="w-full truncate px-1 text-center text-rava-xs font-black leading-tight text-white/80">
+                    {stamp.placeName}
+                  </span>
+                </motion.div>
+              ))
+            )}
+            {wallet.stamps.length > 4 && (
+              <div className="glass flex h-20 w-20 shrink-0 items-center justify-center rounded-rava-lg border-rava-gold/20 text-rava-xs font-black text-rava-gold shadow-lg">
+                +{wallet.stamps.length - 4}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between opacity-40">
+            <Sparkles size={14} className="text-rava-gold" />
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+              <span className="text-rava-xs font-black uppercase tracking-widest text-white">Tap to open · راوا</span>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </button>
+
+      <FullPageOverlay open={open} onClose={() => setOpen(false)} title="پاسپورت راوا">
+        <PassportPage />
+      </FullPageOverlay>
+    </>
   );
 };

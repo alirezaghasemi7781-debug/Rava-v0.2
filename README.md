@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# راوا · Rava
 
-# Run and deploy your AI Studio app
+Voice-first AI travel assistant for Iranian travelers in Istanbul and Dubai.
 
-This contains everything you need to run your app locally.
+## Run locally
 
-View your app in AI Studio: https://ai.studio/apps/drive/1OaGduRtkwyXHqu6vAcmdDTX-tPiklU0y
+**Prerequisites:** Node.js
 
-## Run Locally
+1. `npm install`
+2. Configure env (Gemini, Google Maps, Supabase) — see `config.ts` / `.env.local`
+3. `npm run dev`
+4. Production build: `npm run build`
 
-**Prerequisites:**  Node.js
+## Before launch
 
+Apply Supabase migrations under `supabase/migrations/` in order, then follow:
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+→ [`docs/LAUNCH_CHECKLIST.md`](docs/LAUNCH_CHECKLIST.md)
+
+Architecture overview: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · Product: [`docs/PROJECT.md`](docs/PROJECT.md)
+
+## Brand
+
+- English: **Rava**
+- Persian: **راوا**

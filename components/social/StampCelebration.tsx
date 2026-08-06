@@ -66,7 +66,7 @@ export const StampCelebration: React.FC<StampCelebrationProps> = ({ placeName, o
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         exit={{ scale: 0, opacity: 0 }}
         transition={{ type: "spring", damping: 15 }}
-        className="bg-[#fcf8f0] p-12 rounded-[4.5rem] shadow-[0_50px_100px_rgba(234,179,8,0.3)] flex flex-col items-center gap-8 relative overflow-hidden pointer-events-auto border-4 border-amber-900/10"
+        className="pointer-events-auto relative flex flex-col items-center gap-8 overflow-hidden rounded-rava-modal border-4 border-amber-900/10 bg-[#fcf8f0] p-12 shadow-[0_50px_100px_rgba(234,179,8,0.3)]"
       >
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
         
@@ -81,7 +81,7 @@ export const StampCelebration: React.FC<StampCelebrationProps> = ({ placeName, o
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, type: "spring" }}
-            className="w-28 h-28 bg-amber-900 rounded-[2.5rem] flex items-center justify-center text-amber-500 shadow-2xl relative z-10 rotate-6"
+            className="relative z-10 flex h-28 w-28 rotate-6 items-center justify-center rounded-rava-xl bg-amber-900 text-amber-500 shadow-2xl"
           >
             <Award size={64} />
           </motion.div>
@@ -105,16 +105,16 @@ export const StampCelebration: React.FC<StampCelebrationProps> = ({ placeName, o
             className="bg-blue-100 px-6 py-3 rounded-2xl flex items-center gap-2 border border-blue-200"
           >
              <Star size={20} className="text-blue-600" />
-             <span className="text-blue-700 font-black text-sm">+۵۰ امتیاز XP</span>
+             <span className="text-blue-700 font-black text-sm">+۵۰ امتیاز</span>
           </motion.div>
         </div>
 
         <motion.div
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-amber-900/20 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em]"
+          className="flex items-center gap-2 text-rava-xs font-black uppercase tracking-[0.3em] text-amber-900/20"
         >
-          <Sparkles size={14} /> Islamic Republic of Rahnam
+          <Sparkles size={14} /> پاسپورت راوا
         </motion.div>
       </motion.div>
 

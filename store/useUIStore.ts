@@ -1,15 +1,17 @@
 
 import { create } from 'zustand';
-import { UIState, AppTab } from '../types';
+import { UIState, AppTab, PendingToolConfirm } from '../types';
 
 interface ExtendedUIState extends UIState {
   isInterrupting: boolean;
   isUserTalking: boolean;
-  isPlayingNarrative: boolean; // استیت جدید برای فاز ۲
-  
+  isPlayingNarrative: boolean;
+  showCityPicker: boolean;
+
   setInterrupting: (val: boolean) => void;
   setUserTalking: (val: boolean) => void;
   setPlayingNarrative: (val: boolean) => void;
+  setShowCityPicker: (val: boolean) => void;
 }
 
 export const useUIStore = create<ExtendedUIState>((set) => ({
@@ -20,11 +22,13 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   isConnecting: false,
   isInterrupting: false,
   isUserTalking: false,
-  isPlayingNarrative: false, // مقدار اولیه
+  isPlayingNarrative: false,
   showTranscript: false,
   showVision: false,
+  showCityPicker: false,
   captions: { user: '', ai: '' },
   rewardNotify: null,
+  pendingToolConfirm: null,
 
   setActiveTab: (tab: AppTab) => set({ activeTab: tab }),
   setRecording: (val: boolean) => set({ isRecording: val }),
@@ -36,6 +40,8 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   setPlayingNarrative: (val: boolean) => set({ isPlayingNarrative: val }),
   setShowTranscript: (val: boolean) => set({ showTranscript: val }),
   setShowVision: (val: boolean) => set({ showVision: val }),
+  setShowCityPicker: (val: boolean) => set({ showCityPicker: val }),
   setCaptions: (captions) => set({ captions }),
   setRewardNotify: (val) => set({ rewardNotify: val }),
+  setPendingToolConfirm: (val: PendingToolConfirm | null) => set({ pendingToolConfirm: val }),
 }));

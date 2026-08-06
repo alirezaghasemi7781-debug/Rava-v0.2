@@ -2,6 +2,9 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { SurvivalState, Flashcard, CurrencyType } from '../types';
+import { migrateLocalStorageKey } from '../utils/storageMigration';
+
+migrateLocalStorageKey('rahnam-survival-storage-v2', 'rava-survival-storage-v2');
 
 interface ExtendedSurvivalState extends SurvivalState {
   isMapFullscreen: boolean;
@@ -27,7 +30,7 @@ export const useSurvivalStore = create<ExtendedSurvivalState>()(
       setActiveCurrency: (activeCurrency) => set({ activeCurrency }),
     }),
     {
-      name: 'rahnam-survival-storage-v2',
+      name: 'rava-survival-storage-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

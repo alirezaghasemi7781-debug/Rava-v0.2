@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion as _motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -10,7 +9,7 @@ const VIBES = [
   { id: 'luxury', label: 'پولدار طور', icon: '🤑', desc: 'بهترین هتل‌ها و رستوران‌های خاص' },
   { id: 'budget', label: 'مفت گردی', icon: '🎒', desc: 'تجربه‌های باحال با کمترین هزینه' },
   { id: 'hidden_gem', label: 'کشف ناشناخته‌ها', icon: '🕵️', desc: 'جاهایی که توریست‌ها نمیشناسن' },
-  { id: 'instagrammable', label: 'خوراک استوری', icon: '📸', desc: 'زیباترین لوکیشن‌ها برای عکاسی' }
+  { id: 'instagrammable', label: 'خوراک استوری', icon: '📸', desc: 'زیباترین لوکیشن‌ها برای عکاسی' },
 ];
 
 interface VibeStepProps {
@@ -20,25 +19,26 @@ interface VibeStepProps {
 }
 
 export const VibeStep: React.FC<VibeStepProps> = ({ selectedVibe, onSelect, onBack }) => (
-  <motion.div 
-    initial={{ opacity: 0, x: -20 }} 
-    animate={{ opacity: 1, x: 0 }} 
-    exit={{ opacity: 0, x: 20 }} 
-    className="space-y-10"
-  >
-    <div className="text-right space-y-2">
-      <h1 className="text-4xl font-black text-white leading-tight">فازِ سفرت چیه؟</h1>
-      <p className="text-white/40 text-sm font-bold">دوست داری چطور بگذره؟</p>
+  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-10">
+    <div className="space-y-2 text-right">
+      <h1 className="rava-page-title text-4xl leading-tight">فازِ سفرت چیه؟</h1>
+      <p className="rava-page-subtitle">دوست داری چطور بگذره؟</p>
     </div>
 
-    <div className="grid grid-cols-1 gap-4 overflow-y-auto max-h-[55vh] pr-2 no-scrollbar pb-10">
-      {VIBES.map(vibe => (
-        <button key={vibe.id} onClick={() => onSelect(vibe.id)} className="w-full text-right outline-none">
-          <GlassCard className={`flex items-center justify-between p-6 border-white/5 active:scale-[0.98] transition-all duration-300 ${selectedVibe === vibe.id ? 'bg-yellow-500/10 border-yellow-500/30 ring-1 ring-yellow-500/20' : 'hover:border-white/10'}`}>
+    <div className="grid max-h-[55vh] grid-cols-1 gap-4 overflow-y-auto pb-10 pe-2 no-scrollbar">
+      {VIBES.map((vibe) => (
+        <button key={vibe.id} type="button" onClick={() => onSelect(vibe.id)} className="w-full text-right outline-none">
+          <GlassCard
+            className={`flex items-center justify-between border-white/5 p-6 transition-all duration-300 active:scale-[0.98] ${
+              selectedVibe === vibe.id ? 'border-rava-gold/30 bg-rava-gold/10 ring-1 ring-rava-gold/20' : 'hover:border-white/10'
+            }`}
+          >
             <span className="text-4xl drop-shadow-xl">{vibe.icon}</span>
-            <div className="text-right flex-1 pr-6">
-              <h3 className={`text-xl font-black transition-colors ${selectedVibe === vibe.id ? 'text-yellow-500' : 'text-white'}`}>{vibe.label}</h3>
-              <p className="text-white/30 text-[10px] font-bold mt-1 uppercase tracking-tighter">{vibe.desc}</p>
+            <div className="flex-1 pe-6 text-right">
+              <h3 className={`text-rava-lg font-black transition-colors ${selectedVibe === vibe.id ? 'text-rava-gold' : 'text-white'}`}>
+                {vibe.label}
+              </h3>
+              <p className="mt-1 text-rava-xs font-bold uppercase tracking-tighter text-white/30">{vibe.desc}</p>
             </div>
           </GlassCard>
         </button>
@@ -46,13 +46,17 @@ export const VibeStep: React.FC<VibeStepProps> = ({ selectedVibe, onSelect, onBa
     </div>
 
     <div className="flex items-center justify-between pt-4">
-      <button onClick={onBack} className="flex items-center gap-2 text-white/20 font-black text-[10px] uppercase tracking-widest hover:text-white transition-colors group">
+      <button
+        type="button"
+        onClick={onBack}
+        className="group flex items-center gap-2 text-rava-xs font-black uppercase tracking-widest text-white/20 transition-colors hover:text-white"
+      >
         <span>مرحله قبل</span>
         <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
       </button>
-      <div className="flex items-center gap-2 text-yellow-500/20">
-         <Sparkles size={16} />
-         <div className="w-8 h-px bg-current" />
+      <div className="flex items-center gap-2 text-rava-gold/20">
+        <Sparkles size={16} />
+        <div className="h-px w-8 bg-current" />
       </div>
     </div>
   </motion.div>

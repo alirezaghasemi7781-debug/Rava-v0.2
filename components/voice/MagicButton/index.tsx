@@ -1,12 +1,9 @@
-
-import React from 'react';
+﻿import React from 'react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Zap } from 'lucide-react';
 import { useUIStore } from '../../../store/useUIStore';
 import { useGeminiLive } from '../../../hooks/useGeminiLive';
 import { AudioVisualizer } from '../AudioVisualizer';
-
-// Sub-components
 import { StatusRing } from './StatusRing';
 import { MicTrigger } from './MicTrigger';
 import { ControlActions } from './ControlActions';
@@ -14,80 +11,78 @@ import { ControlActions } from './ControlActions';
 const motion = _motion as any;
 
 export const MagicButton: React.FC = () => {
-  const isRecording = useUIStore(s => s.isRecording);
-  const isSpeaking = useUIStore(s => s.isSpeaking);
-  const isThinking = useUIStore(s => s.isThinking);
-  const showTranscript = useUIStore(s => s.showTranscript);
-  const captions = useUIStore(s => s.captions);
-  const setShowTranscript = useUIStore(s => s.setShowTranscript);
-  
+  const isRecording = useUIStore((s) => s.isRecording);
+  const isSpeaking = useUIStore((s) => s.isSpeaking);
+  const isThinking = useUIStore((s) => s.isThinking);
+  const showTranscript = useUIStore((s) => s.showTranscript);
+  const captions = useUIStore((s) => s.captions);
+  const setShowTranscript = useUIStore((s) => s.setShowTranscript);
+
   const { connect, disconnect, interrupt } = useGeminiLive();
 
   return (
-    <div className="fixed bottom-24 left-0 right-0 z-[1500] flex flex-col items-center gap-4 pointer-events-none">
-      
-      {/* ۱. کپشن‌های زنده */}
+    <div
+      className="fixed inset-x-0 z-[1500] flex flex-col items-center gap-3 pointer-events-none"
+      style={{ bottom: 'var(--magic-button-bottom)' }}
+    >
       <AnimatePresence>
         {captions.user && isRecording && !isSpeaking && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="max-w-[70%] glass px-4 py-2 rounded-xl text-[9px] text-white/50 text-center font-bold shadow-xl"
+            className="glass max-w-[72%] rounded-xl px-4 py-2 text-center text-rava-xs font-bold text-white/60 shadow-glass"
           >
             شما: {captions.user}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ۲. مشاهده متن */}
       <motion.button
-        initial={{ opacity: 0 }} 
+        initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         onClick={(e) => {
           e.stopPropagation();
           setShowTranscript(!showTranscript);
         }}
-        className="pointer-events-auto glass px-3 py-1.5 rounded-xl flex items-center gap-2 text-[8px] font-black text-white/30 border-white/5"
+        className="pointer-events-auto flex items-center gap-2 rounded-rava-md border border-white/5 glass px-3 py-1.5 text-rava-xs font-bold text-white/40"
       >
         <MessageSquare size={12} />
         {showTranscript ? 'پنهان' : 'متن'}
       </motion.button>
 
-      {/* ۳. وضعیت بصری */}
       <AnimatePresence>
         {(isRecording || isSpeaking || isThinking) && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="glass px-4 py-2 rounded-full flex items-center gap-3 shadow-xl border-white/10"
+            exit={{ opacity: 0, scale: 0.92 }}
+            className="glass flex items-center gap-3 rounded-full border border-white/10 px-4 py-2 shadow-glass"
           >
             {isThinking && !isSpeaking ? (
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}>
-                <Zap size={14} className="text-yellow-400" />
+              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}>
+                <Zap size={14} className="text-rava-gold" />
               </motion.div>
             ) : (
               <AudioVisualizer isActive={isRecording || isSpeaking} />
             )}
-            <span className="text-yellow-400 font-black text-[9px] uppercase tracking-widest">
-              {isSpeaking ? 'AI Speaking' : isThinking ? 'Thinking' : 'Listening'}
+            <span className="text-rava-xs font-black tracking-wide text-rava-gold">
+              {isSpeaking ? 'راوا در حال پاسخ است' : isThinking ? 'در حال فکر کردن' : 'در حال گوش دادن'}
             </span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* ۴. کانتینر عملیاتی */}
-      <div className="relative w-full h-20 flex items-center justify-center pointer-events-none">
-        <div className="absolute inset-0 flex items-center justify-center z-0 scale-75">
+      <div className="relative flex h-20 w-full items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center scale-75">
           <StatusRing />
         </div>
-        
-        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <ControlActions onDisconnect={disconnect} onInterrupt={interrupt} />
         </div>
 
-        <div className="relative z-20 pointer-events-auto scale-90">
+        <div className="relative z-20 scale-90 pointer-events-auto">
           <MicTrigger onStart={connect} />
         </div>
       </div>

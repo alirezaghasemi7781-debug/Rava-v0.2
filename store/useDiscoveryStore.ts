@@ -4,11 +4,15 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { POI, CityMode } from '../types';
 import { discoveryService } from '../services/discoveryService';
 import { PlaceService } from '../services/placeService';
+import { migrateLocalStorageKey } from '../utils/storageMigration';
+
+migrateLocalStorageKey('rahnam-discovery-storage-v5', 'rava-discovery-storage-v5');
 
 interface DiscoveryState {
   discoveredPlaces: POI[];
   curatedPlaces: POI[];
   isSearching: boolean;
+  feedError: string | null;
   activeMood: string | null;
   showCurated: boolean;
   lastFetchTime: number | null;
@@ -19,6 +23,7 @@ interface DiscoveryState {
   refreshFeed: (lat: number, lng: number) => Promise<void>;
   fetchCurated: (city: CityMode, force?: boolean) => Promise<void>;
   setDiscoveredPlaces: (places: POI[]) => void;
+  clearFeedError: () => void;
 }
 
 export const useDiscoveryStore = create<DiscoveryState>()(
@@ -27,12 +32,14 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       discoveredPlaces: [],
       curatedPlaces: [],
       isSearching: false,
+      feedError: null,
       activeMood: null,
       showCurated: true,
       lastFetchTime: null,
       cachedCity: null,
 
       setActiveMood: (mood) => set({ activeMood: mood }),
+      clearFeedError: () => set({ feedError: null }),
       
       toggleShowCurated: () => set((state) => ({ showCurated: !state.showCurated })),
 
@@ -58,6 +65,11 @@ export const useDiscoveryStore = create<DiscoveryState>()(
             set({ curatedPlaces: [] });
           }
 
+          if (force) {
+            const { assistantCache } = await import('../services/cache/assistantCache');
+            await assistantCache.invalidate('curated_pois', city);
+          }
+
           const places = await discoveryService.getCuratedPlaces(city);
           
           if (places && places.length > 0) {
@@ -73,7 +85,7 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       },
 
       refreshFeed: async (lat, lng) => {
-        set({ isSearching: true });
+        set({ isSearching: true, feedError: null });
         const mood = get().activeMood || undefined;
         
         try {
@@ -81,9 +93,13 @@ export const useDiscoveryStore = create<DiscoveryState>()(
           if (places.length === 0) {
             places = await PlaceService.fetchNearbyFallback(lat, lng, mood);
           }
-          set({ discoveredPlaces: places });
+          set({ discoveredPlaces: places, feedError: null });
         } catch (e) {
           console.error("[Discovery] Feed refresh failed:", e);
+          set({
+            feedError:
+              e instanceof Error ? e.message : 'شبکه در دسترس نیست. دوباره تلاش کن.',
+          });
         } finally {
           set({ isSearching: false });
         }
@@ -92,7 +108,7 @@ export const useDiscoveryStore = create<DiscoveryState>()(
       setDiscoveredPlaces: (places) => set({ discoveredPlaces: places })
     }),
     {
-      name: 'rahnam-discovery-storage-v5', // ورژن استوریج را بالا بردم تا کش قبلی invalidate شود
+      name: 'rava-discovery-storage-v5',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ 
         curatedPlaces: state.curatedPlaces,
