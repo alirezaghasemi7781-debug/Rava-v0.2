@@ -257,14 +257,14 @@ export const POIController: React.FC = () => {
             className="fixed bottom-28 start-4 end-4 z-[3000]"
           >
             <div className="glass relative overflow-hidden rounded-rava-xl border-white/10 p-5 shadow-[0_20px_40px_rgba(0,0,0,0.45)]">
-              <div className="absolute -top-4 -right-4 opacity-5 blur-sm transform rotate-12 pointer-events-none">
+              <div className="absolute -top-4 -start-4 opacity-5 blur-sm transform rotate-12 pointer-events-none">
                 <Category3DIcon category={activePOI.category} size="text-9xl" />
               </div>
               <div className="flex items-start justify-between mb-4">
                 <button onClick={() => { activeRequestIdRef.current = null; clearActivePOI(); }} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90">
                   <X size={20} />
                 </button>
-                <div className="text-right flex-1 pr-4">
+                <div className="flex-1 pe-4">
                   <motion.h3 layoutId={`title-${activePOI.id}`} className="text-white font-black text-xl mb-0.5 truncate">{activePOI.name}</motion.h3>
                   <div className="flex items-center justify-end gap-1 text-white/40 text-[11px] font-bold">
                     <span>{activePOI.description || 'Ready for Discovery'}</span>
@@ -388,7 +388,7 @@ export const POIController: React.FC = () => {
                     animate={{ opacity: 1, scale: 1 }}
                     className="glass relative flex flex-col items-center gap-5 overflow-hidden rounded-rava-modal border-rava-gold/30 bg-rava-gold/10 p-6"
                   >
-                    <div className="absolute top-0 left-0 w-full h-1 bg-white/5 overflow-hidden">
+                    <div className="absolute top-0 inset-x-0 h-1 bg-white/5 overflow-hidden">
                        <motion.div 
                          className="h-full bg-rava-gold" 
                          initial={{ width: 0 }} 
@@ -449,7 +449,7 @@ export const POIController: React.FC = () => {
                 </div>
 
                 <div className="relative group">
-                  <div className="absolute -top-4 -right-4 w-14 h-14 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-600/30 z-10 group-hover:scale-110 transition-transform">
+                  <div className="absolute -top-4 -start-4 w-14 h-14 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-indigo-600/30 z-10 group-hover:scale-110 transition-transform">
                     <Sparkles size={28} className="text-white" />
                   </div>
                   <div className="glass rounded-rava-modal border-indigo-500/30 bg-indigo-600/5 p-8 pt-10 transition-all group-hover:bg-indigo-600/10">

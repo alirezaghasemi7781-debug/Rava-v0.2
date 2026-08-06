@@ -110,7 +110,7 @@ export const DailyCurator: React.FC = () => {
 
   return (
     <GlassCard className="bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-500/30 overflow-hidden relative">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full" />
+      <div className="absolute top-0 end-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full" />
       <div className="flex justify-between items-center mb-6 relative z-10">
         <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400"><Calendar size={20} /></div>
         <h3 className="text-white font-black text-xl">برنامه پیشنهادی امروز</h3>
@@ -144,7 +144,7 @@ export const DailyCurator: React.FC = () => {
               ].map((item, i) => (
                 <motion.div 
                   initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-                  key={i} className="flex gap-4 items-start flex-row-reverse"
+                  key={i} className="flex gap-4 items-start"
                 >
                    <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${item.color.replace('text', 'bg')}`} />
                    <div>

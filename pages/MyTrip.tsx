@@ -201,7 +201,7 @@ export const MyTrip: React.FC = () => {
       </div>
 
       {todaysList.length > 0 && (
-        <div className="relative me-4 border-e-2 border-white/10 pe-6">
+        <div className="relative ms-4 border-s-2 border-white/10 ps-6">
           {todaysList.map((event, idx) => (
             <TimelineEvent
               key={event.id}

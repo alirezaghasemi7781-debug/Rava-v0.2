@@ -39,16 +39,16 @@ export const MapControls: React.FC = () => {
   const modeLabel = mode === 'walking' ? 'پیاده' : mode === 'driving' ? 'خودرو' : 'حمل‌ونقل';
 
   return (
-    <div className="absolute left-6 top-24 z-[1000] flex flex-col gap-4">
+    <div className="absolute start-6 top-24 z-[1000] flex flex-col gap-4">
       {(mapsLoadError || locationPermissionDenied) && (
-        <div className="absolute left-16 top-0 w-56 space-y-1 rounded-rava-xl border border-red-500/30 glass px-3 py-2.5">
+        <div className="absolute start-16 top-0 w-56 space-y-1 rounded-rava-xl border border-red-500/30 glass px-3 py-2.5">
           {mapsLoadError && (
-            <button type="button" className="w-full text-right" onClick={() => setMapsLoadError(null)}>
+            <button type="button" className="w-full text-start" onClick={() => setMapsLoadError(null)}>
               <p className="text-rava-xs font-bold leading-relaxed text-red-300">{mapsLoadError}</p>
             </button>
           )}
           {locationPermissionDenied && (
-            <button type="button" className="w-full text-right" onClick={() => setLocationPermissionDenied(false)}>
+            <button type="button" className="w-full text-start" onClick={() => setLocationPermissionDenied(false)}>
               <p className="text-rava-xs font-bold leading-relaxed text-amber-300">دسترسی موقعیت قطع است. از تنظیمات مرورگر GPS را فعال کن.</p>
             </button>
           )}
@@ -58,7 +58,7 @@ export const MapControls: React.FC = () => {
       <button type="button" onClick={handleToggle} aria-label="نمایش مکان‌های راوا" className={`${controlClass} group ${showCurated ? 'border-yellow-400 bg-rava-gold text-black shadow-[0_0_30px_rgba(234,179,8,0.4)]' : 'border-white/10 bg-black/40 text-white/40 backdrop-blur-xl hover:border-white/20 hover:text-white'}`}>
         <Sparkles size={20} className={showCurated ? 'animate-pulse' : ''} />
         <span className="mt-1 text-rava-xs font-black tracking-tight">جواهر</span>
-        <div className="pointer-events-none absolute right-full mr-4 rounded-rava-md glass px-3 py-1.5 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
+        <div className="pointer-events-none absolute end-full me-4 rounded-rava-md glass px-3 py-1.5 opacity-0 transition-opacity group-hover:opacity-100 whitespace-nowrap">
           <span className="text-rava-xs font-bold text-white">نمایش لایه راوا</span>
         </div>
       </button>
@@ -88,7 +88,7 @@ export const MapControls: React.FC = () => {
 
       <AnimatePresence>
         {isActive && (route || error || isCalculating) && (
-          <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} className={`absolute left-16 top-0 min-w-[140px] max-w-[220px] rounded-rava-xl glass px-4 py-3 ${error ? 'border-red-500/40' : 'border-rava-gold/30'}`}>
+          <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} className={`absolute start-16 top-0 min-w-[140px] max-w-[220px] rounded-rava-xl glass px-4 py-3 ${error ? 'border-red-500/40' : 'border-rava-gold/30'}`}>
             {isCalculating && !route && !error && (
               <>
                 <p className="mb-1 text-rava-xs font-black tracking-widest text-rava-gold">مسیر راوا</p>

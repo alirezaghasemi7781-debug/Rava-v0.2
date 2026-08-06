@@ -1,6 +1,6 @@
 ﻿import React from 'react';
 import { motion as _motion } from 'framer-motion';
-import { ArrowLeft, Star, MapPin } from 'lucide-react';
+import { ArrowRight, Star, MapPin } from 'lucide-react';
 
 const motion = _motion as any;
 
@@ -39,7 +39,7 @@ export const POIHeader: React.FC<POIHeaderProps> = ({ id, name, image, rating, c
       <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-black/40" />
 
       <button onClick={onBack} className="absolute start-5 top-[calc(var(--safe-top)+1rem)] z-30 flex min-h-tap min-w-tap items-center justify-center rounded-rava-xl glass text-white/80 shadow-glass transition-all active:scale-90">
-        <ArrowLeft size={22} />
+        <ArrowRight size={22} />
       </button>
 
       <div className="absolute inset-x-6 bottom-10 z-20 text-right sm:inset-x-12 sm:bottom-12">

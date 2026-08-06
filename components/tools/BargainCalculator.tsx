@@ -78,7 +78,7 @@ export const BargainCalculator: React.FC = () => {
   return (
     <div className="space-y-5">
       <GlassCard className="relative overflow-hidden border-rava-gold/20">
-        <div className="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-rava-gold/5 blur-3xl" />
+        <div className="absolute -start-10 -top-10 h-32 w-32 rounded-full bg-rava-gold/5 blur-3xl" />
         <h3 className="mb-5 flex items-center gap-3 text-rava-xl font-black text-white">
           <div className="rounded-rava-md bg-rava-gold/20 p-2 text-rava-gold"><DollarSign size={20} /></div>
           ماشین‌حساب چانه‌زنی
@@ -111,7 +111,7 @@ export const BargainCalculator: React.FC = () => {
                 <span className="font-black">نظر راوا</span>
               </div>
             </div>
-            <p className="pr-1 text-rava-sm font-bold leading-relaxed">{verdict.message}</p>
+            <p className="pe-1 text-rava-sm font-bold leading-relaxed">{verdict.message}</p>
           </motion.div>
         )}
       </AnimatePresence>

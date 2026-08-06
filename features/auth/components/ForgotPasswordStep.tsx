@@ -1,6 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { motion as _motion } from 'framer-motion';
-import { Mail, Loader2, ChevronLeft, CheckCircle2 } from 'lucide-react';
+import { Mail, Loader2, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { AudioGraph } from '../../../services/audioGraph';
 import { Input, Button } from '../../../components/ui';
@@ -64,7 +64,7 @@ export const ForgotPasswordStep: React.FC<ForgotPasswordStepProps> = ({ email, o
     <motion.form initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2 text-right">
         <div className="flex items-center justify-between">
-          <Button type="button" variant="ghost" size="sm" onClick={onBack} leadingIcon={<ChevronLeft size={14} />}>
+          <Button type="button" variant="ghost" size="sm" onClick={onBack} leadingIcon={<ChevronRight size={14} />}>
             بازگشت
           </Button>
           <h2 className="rava-page-title text-xl">بازیابی رمز</h2>

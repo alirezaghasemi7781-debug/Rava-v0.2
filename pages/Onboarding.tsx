@@ -39,8 +39,8 @@ export const Onboarding: React.FC = () => {
   return (
     <div className="fixed inset-0 z-[5000] flex flex-col overflow-hidden bg-rava-bg px-5 pb-safe pt-safe sm:px-8">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/4 top-1/4 h-72 w-72 rounded-full bg-rava-gold/5 blur-[120px] sm:h-96 sm:w-96" />
-        <div className="absolute bottom-1/4 right-1/4 h-72 w-72 rounded-full bg-indigo-500/5 blur-[120px] sm:h-96 sm:w-96" />
+        <div className="absolute start-1/4 top-1/4 h-72 w-72 rounded-full bg-rava-gold/5 blur-[120px] sm:h-96 sm:w-96" />
+        <div className="absolute bottom-1/4 end-1/4 h-72 w-72 rounded-full bg-indigo-500/5 blur-[120px] sm:h-96 sm:w-96" />
       </div>
 
       <div className="pt-4">

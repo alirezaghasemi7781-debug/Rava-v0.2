@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion as _motion } from 'framer-motion';
-import { Lock, Loader2, Sparkles, ChevronLeft } from 'lucide-react';
+import { Lock, Loader2, Sparkles, ChevronRight } from 'lucide-react';
 
 const motion = _motion as any;
 
@@ -36,17 +36,17 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
   >
     <div className="text-right space-y-2.5">
       <div className="flex justify-between items-center">
+        <h2 className="rava-page-title text-xl">
+          {mode === 'login' ? 'ورود' : 'ثبت‌نام'}
+        </h2>
         <button
           type="button"
           onClick={onBack}
           className="rava-btn-ghost flex items-center gap-1 px-2"
         >
-          <ChevronLeft size={14} />
+          <ChevronRight size={14} />
           <span>تغییر ایمیل</span>
         </button>
-        <h2 className="rava-page-title text-xl">
-          {mode === 'login' ? 'ورود' : 'ثبت‌نام'}
-        </h2>
       </div>
       <p className="text-white/35 text-xs font-mono truncate bg-white/[0.04] px-3 py-2 rounded-xl border border-white/5 ltr-island" dir="ltr">
         {email}

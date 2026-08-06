@@ -20,7 +20,7 @@ export const PassportCard: React.FC = () => {
           AudioGraph.getInstance().playTickSound();
           setOpen(true);
         }}
-        className="group relative h-64 w-full overflow-hidden rounded-rava-modal border border-white/10 bg-rava-elevated text-left shadow-2xl transition-transform active:scale-[0.99] selection:bg-rava-gold/30"
+        className="group relative h-64 w-full overflow-hidden rounded-rava-modal border border-white/10 bg-rava-elevated shadow-2xl transition-transform active:scale-[0.99] selection:bg-rava-gold/30"
       >
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.03]"
