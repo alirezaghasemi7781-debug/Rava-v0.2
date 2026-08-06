@@ -14,22 +14,24 @@ import { TripArchiveModal } from '../../features/profile/modals/TripArchiveModal
 import { ReferralModal } from '../../features/profile/modals/ReferralModal';
 import { VoiceLabModal } from '../../features/profile/modals/VoiceLabModal';
 import { PassportPage } from '../social/PassportPage';
+import { FullPageOverlay, Button } from '../ui';
 
 const MenuItem = ({ icon: Icon, label, desc, color, onClick, isLast = false }: any) => (
   <button
+    type="button"
     onClick={onClick}
-    className={`w-full flex items-center justify-between py-5 px-2 group active:scale-[0.98] transition-all ${!isLast ? 'border-b border-white/[0.03]' : ''}`}
+    className={`group flex w-full items-center justify-between px-2 py-5 transition-all active:scale-[0.98] ${!isLast ? 'border-b border-white/[0.03]' : ''}`}
   >
     <div className="flex items-center gap-4">
-      <div className={`w-11 h-11 rounded-2xl glass border-white/5 flex items-center justify-center ${color} shadow-lg transition-transform group-hover:-rotate-6`}>
+      <div className={`glass flex h-11 w-11 items-center justify-center rounded-rava-lg border-white/5 shadow-lg transition-transform group-hover:-rotate-6 ${color}`}>
         <Icon size={20} />
       </div>
       <div className="text-right">
-        <h4 className="text-white font-black text-sm tracking-tight">{label}</h4>
-        <p className="text-white/20 text-[9px] font-bold mt-0.5">{desc}</p>
+        <h4 className="text-rava-sm font-black tracking-tight text-white">{label}</h4>
+        <p className="mt-0.5 text-rava-xs font-bold text-white/20">{desc}</p>
       </div>
     </div>
-    <ChevronLeft size={16} className="text-white/10 group-hover:text-white/40 transition-colors" />
+    <ChevronLeft size={16} className="text-white/10 transition-colors group-hover:text-white/40" />
   </button>
 );
 
@@ -54,7 +56,7 @@ export const ActionMenu: React.FC = () => {
           icon: BookOpen,
           label: 'پاسپورت راوا',
           desc: 'مهرها، شهرها و دستاوردها',
-          color: 'text-yellow-500',
+          color: 'text-rava-gold',
           onClick: () => setActiveModal('passport'),
         },
         {
@@ -80,7 +82,7 @@ export const ActionMenu: React.FC = () => {
           icon: UserPlus,
           label: 'دعوت رفقا',
           desc: 'شارژ هدیه برای هر دو نفر',
-          color: 'text-yellow-500',
+          color: 'text-rava-gold',
           onClick: () => setActiveModal('referral'),
         },
       ],
@@ -99,7 +101,7 @@ export const ActionMenu: React.FC = () => {
           icon: ScrollText,
           label: 'دفتر کل سوخت',
           desc: 'تاریخچه مصرف و پاداش‌ها',
-          color: 'text-yellow-500',
+          color: 'text-rava-gold',
           onClick: () => setActiveModal('ledger'),
         },
         {
@@ -137,67 +139,42 @@ export const ActionMenu: React.FC = () => {
         {sections.map((section, idx) => (
           <div key={idx} className="space-y-4">
             <div className="flex items-center justify-between px-2">
-              <h3 className="text-white/20 font-black text-[9px] uppercase tracking-[0.4em]">
-                {section.title}
-              </h3>
-              <div className="h-px flex-1 bg-white/5 mr-6" />
+              <h3 className="text-rava-xs font-black uppercase tracking-[0.4em] text-white/20">{section.title}</h3>
+              <div className="me-6 h-px flex-1 bg-white/5" />
             </div>
 
-            <div className="glass rounded-[2.5rem] px-4 border-white/5 bg-white/[0.01]">
+            <div className="glass rounded-rava-xl border-white/5 bg-white/[0.01] px-4">
               {section.items.map((item, i) => (
-                <MenuItem
-                  key={i}
-                  {...item}
-                  isLast={i === section.items.length - 1}
-                />
+                <MenuItem key={i} {...item} isLast={i === section.items.length - 1} />
               ))}
             </div>
           </div>
         ))}
 
-        <button
+        <Button
+          fullWidth
+          variant="danger"
+          size="lg"
           onClick={handleLogout}
-          className="w-full py-6 rounded-[2.2rem] bg-red-500/5 border border-red-500/10 flex items-center justify-center gap-3 active:scale-95 transition-all group"
+          leadingIcon={<LogOut size={18} />}
+          className="border-red-500/10 bg-red-500/5 text-red-500 hover:bg-red-500/10"
         >
-          <LogOut size={18} className="text-red-500/60 group-hover:text-red-500" />
-          <span className="text-red-500 font-black text-xs uppercase tracking-widest mt-0.5">
-            خروج از حساب کاربری
-          </span>
-        </button>
+          خروج از حساب کاربری
+        </Button>
       </div>
 
       <AnimatePresence>
-        {activeModal === 'brain' && (
-          <SemanticBrainModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'ledger' && (
-          <FuelLedgerModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'topup' && (
-          <TopUpModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'favs' && (
-          <FavoritesModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'archive' && (
-          <TripArchiveModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'referral' && (
-          <ReferralModal onClose={() => setActiveModal(null)} />
-        )}
-        {activeModal === 'voice' && (
-          <VoiceLabModal onClose={() => setActiveModal(null)} />
-        )}
+        {activeModal === 'brain' && <SemanticBrainModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'ledger' && <FuelLedgerModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'topup' && <TopUpModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'favs' && <FavoritesModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'archive' && <TripArchiveModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'referral' && <ReferralModal onClose={() => setActiveModal(null)} />}
+        {activeModal === 'voice' && <VoiceLabModal onClose={() => setActiveModal(null)} />}
         {activeModal === 'passport' && (
-          <div className="fixed inset-0 z-[6000] bg-black/95 backdrop-blur-3xl overflow-y-auto no-scrollbar p-4 pb-24">
-            <button
-              onClick={() => setActiveModal(null)}
-              className="sticky top-4 z-10 mb-4 px-4 py-2 rounded-2xl glass text-white/60 text-[10px] font-black uppercase tracking-widest"
-            >
-              بستن
-            </button>
+          <FullPageOverlay open={true} onClose={() => setActiveModal(null)} title="پاسپورت راوا">
             <PassportPage />
-          </div>
+          </FullPageOverlay>
         )}
       </AnimatePresence>
     </>

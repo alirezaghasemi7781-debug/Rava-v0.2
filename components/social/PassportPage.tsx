@@ -14,20 +14,20 @@ const motion = _motion as any;
 const RankBadge = ({ xp }: { xp: number }) => {
   if (xp > 1000) {
     return (
-      <div className="bg-gradient-to-r from-amber-600 to-yellow-500 text-black px-4 py-1.5 rounded-full text-[9px] font-black shadow-lg tracking-tighter">
+      <div className="bg-gradient-to-r from-amber-600 to-rava-gold px-4 py-1.5 rounded-full text-rava-xs font-black shadow-lg tracking-tighter">
         کاوشگر افسانه‌ای
       </div>
     );
   }
   if (xp > 500) {
     return (
-      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black shadow-lg tracking-tighter">
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-4 py-1.5 rounded-full text-rava-xs font-black shadow-lg tracking-tighter">
         جهانگرد
       </div>
     );
   }
   return (
-    <div className="bg-neutral-800 text-white/60 px-4 py-1.5 rounded-full text-[9px] font-black tracking-tighter">
+    <div className="bg-neutral-800 text-white/60 px-4 py-1.5 rounded-full text-rava-xs font-black tracking-tighter">
       مسافر تازه‌کار
     </div>
   );
@@ -110,7 +110,7 @@ export const PassportPage: React.FC = () => {
     'مسافر راوا';
 
   return (
-    <div className="p-8 sm:p-10 bg-gradient-to-br from-[#111] to-black rounded-[3rem] text-white shadow-2xl relative overflow-hidden border border-white/5 ring-4 ring-white/[0.02] space-y-10">
+    <div className="relative space-y-10 overflow-hidden rounded-rava-modal border border-white/5 bg-gradient-to-br from-rava-elevated to-black p-8 text-white shadow-2xl ring-4 ring-white/[0.02] sm:p-10">
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
@@ -119,10 +119,10 @@ export const PassportPage: React.FC = () => {
           backgroundSize: '40px 40px',
         }}
       />
-      <div className="absolute -top-20 -right-20 w-64 h-64 bg-yellow-500/5 blur-[100px] rounded-full" />
+      <div className="absolute -top-20 -end-20 h-64 w-64 rounded-full bg-rava-gold/5 blur-[100px]" />
 
       <div className="flex justify-between items-start relative z-10">
-        <div className="w-16 h-16 bg-white/5 rounded-3xl flex items-center justify-center text-yellow-500 border border-white/10 shadow-2xl rotate-6 overflow-hidden">
+        <div className="flex h-16 w-16 rotate-6 items-center justify-center overflow-hidden rounded-rava-xl border border-white/10 bg-white/5 text-rava-gold shadow-2xl">
           {user?.user_metadata?.avatar_url ? (
             <img
               src={user.user_metadata.avatar_url}
@@ -137,7 +137,7 @@ export const PassportPage: React.FC = () => {
           <h2 className="text-2xl font-black tracking-widest text-white">
             پاسپورت راوا
           </h2>
-          <p className="text-[10px] font-black text-yellow-500/80 tracking-[0.2em] mt-1">
+          <p className="mt-1 text-rava-xs font-black tracking-[0.2em] text-rava-gold/80">
             شهروند جهانی راوا
           </p>
           <p className="text-white/40 text-xs font-bold mt-2">{displayName}</p>
@@ -147,16 +147,16 @@ export const PassportPage: React.FC = () => {
       <div className="grid grid-cols-2 gap-8 relative z-10">
         <div className="space-y-6">
           <div className="space-y-1">
-            <span className="text-[8px] font-black text-white/20 block tracking-widest">
+            <span className="block text-rava-xs font-black tracking-widest text-white/20">
               سوخت در دسترس
             </span>
-            <span className="text-lg font-black flex items-center gap-2 text-yellow-500">
+            <span className="flex items-center gap-2 text-lg font-black text-rava-gold">
               <Zap size={14} fill="currentColor" />
               {toPersianDigits(Math.floor(wallet.balance * 60))} دقیقه
             </span>
           </div>
           <div className="space-y-1">
-            <span className="text-[8px] font-black text-white/20 block tracking-widest">
+            <span className="block text-rava-xs font-black tracking-widest text-white/20">
               رتبه فعلی
             </span>
             <RankBadge xp={wallet.xp} />
@@ -164,15 +164,15 @@ export const PassportPage: React.FC = () => {
         </div>
         <div className="space-y-6 text-right">
           <div className="space-y-1">
-            <span className="text-[8px] font-black text-white/20 block tracking-widest">
+            <span className="block text-rava-xs font-black tracking-widest text-white/20">
               سطح / امتیاز
             </span>
-            <span className="text-lg font-black text-yellow-500">
+            <span className="text-lg font-black text-rava-gold">
               سطح {toPersianDigits(level)} · {toPersianDigits(wallet.xp)} امتیاز
             </span>
           </div>
           <div className="space-y-1">
-            <span className="text-[8px] font-black text-white/20 block tracking-widest">
+            <span className="block text-rava-xs font-black tracking-widest text-white/20">
               سبک سفر
             </span>
             <span className="text-xs font-black text-white/70">
@@ -193,11 +193,11 @@ export const PassportPage: React.FC = () => {
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white/[0.03] border border-white/5 rounded-2xl p-3 text-center space-y-1"
+            className="space-y-1 rounded-rava-lg border border-white/5 bg-white/[0.03] p-3 text-center"
           >
-            <stat.icon size={14} className="mx-auto text-yellow-500/60" />
-            <span className="text-white font-black text-sm block">{stat.value}</span>
-            <span className="text-white/20 text-[7px] font-black uppercase tracking-widest">
+            <stat.icon size={14} className="mx-auto text-rava-gold/60" />
+            <span className="block text-rava-sm font-black text-white">{stat.value}</span>
+            <span className="text-rava-xs font-black uppercase tracking-widest text-white/20">
               {stat.label}
             </span>
           </div>
@@ -206,14 +206,14 @@ export const PassportPage: React.FC = () => {
 
       {citiesVisited.length > 0 && (
         <div className="relative z-10 space-y-3 text-right">
-          <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">
+          <span className="text-rava-xs font-black uppercase tracking-[0.4em] text-white/20">
             شهرهای بازدید شده
           </span>
           <div className="flex flex-wrap gap-2 justify-end">
             {citiesVisited.map((city) => (
               <span
                 key={city}
-                className="px-3 py-1.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 text-[10px] font-black"
+                className="rounded-rava-md border border-rava-gold/20 bg-rava-gold/10 px-3 py-1.5 text-rava-xs font-black text-rava-gold"
               >
                 {city}
               </span>
@@ -225,16 +225,16 @@ export const PassportPage: React.FC = () => {
       {/* Stamps */}
       <div className="relative z-10 space-y-4">
         <div className="flex justify-between items-center">
-          <span className="text-[10px] font-black text-white/10 tracking-[0.5em]">
+          <span className="text-rava-xs font-black tracking-[0.5em] text-white/10">
             بایگانی مهرها
           </span>
           <div className="h-[1px] bg-white/5 flex-1 mx-6" />
         </div>
         <div className="grid grid-cols-2 gap-4 max-h-[280px] overflow-y-auto no-scrollbar pb-2">
           {wallet.stamps.length === 0 ? (
-            <div className="col-span-2 py-14 border-2 border-dashed border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 opacity-30">
+            <div className="col-span-2 flex flex-col items-center gap-4 rounded-rava-xl border-2 border-dashed border-white/5 py-14 opacity-30">
               <Milestone size={36} />
-              <p className="text-[10px] font-black uppercase tracking-widest">
+              <p className="text-rava-xs font-black uppercase tracking-widest">
                 هنوز مهری ثبت نشده
               </p>
             </div>
@@ -245,13 +245,13 @@ export const PassportPage: React.FC = () => {
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: idx * 0.05 }}
-                className="h-28 bg-white/[0.02] border border-white/[0.05] rounded-[2rem] flex flex-col items-center justify-center p-3"
+                className="flex h-28 flex-col items-center justify-center rounded-rava-xl border border-white/[0.05] bg-white/[0.02] p-3"
               >
-                <MapPin size={20} className="text-white/20 mb-2" />
-                <span className="text-[9px] font-black text-center text-white/90 leading-tight truncate w-full px-2">
+                <MapPin size={20} className="mb-2 text-white/20" />
+                <span className="w-full truncate px-2 text-center text-rava-xs font-black leading-tight text-white/90">
                   {stamp.placeName}
                 </span>
-                <span className="text-[7px] text-white/20 font-bold mt-1">
+                <span className="mt-1 text-rava-xs font-bold text-white/20">
                   {stamp.city ? `${stamp.city} · ` : ''}
                   {displayJalaliDate(stamp.date)}
                 </span>
@@ -263,13 +263,13 @@ export const PassportPage: React.FC = () => {
 
       {/* Daily recaps */}
       <div className="relative z-10 space-y-4">
-        <div className="flex items-center justify-end gap-2 text-white/20 text-[10px] font-black uppercase tracking-[0.4em]">
+        <div className="flex items-center justify-end gap-2 text-rava-xs font-black uppercase tracking-[0.4em] text-white/20">
           <span>خلاصه روزانه</span>
           <Calendar size={12} />
         </div>
         {recaps.length === 0 ? (
-          <div className="py-10 border border-dashed border-white/5 rounded-[2rem] text-center opacity-30">
-            <p className="text-[10px] font-black uppercase tracking-widest">
+          <div className="rounded-rava-xl border border-dashed border-white/5 py-10 text-center opacity-30">
+            <p className="text-rava-xs font-black uppercase tracking-widest">
               هنوز خلاصه‌ای ثبت نشده
             </p>
           </div>
@@ -278,9 +278,9 @@ export const PassportPage: React.FC = () => {
             {recaps.map((r) => (
               <div
                 key={r.id}
-                className="bg-white/[0.03] border border-white/5 rounded-2xl p-4 text-right space-y-1"
+                className="space-y-1 rounded-rava-lg border border-white/5 bg-white/[0.03] p-4 text-right"
               >
-                <div className="flex justify-between items-center text-[9px] font-black text-white/30">
+                <div className="flex items-center justify-between text-rava-xs font-black text-white/30">
                   <span>+{toPersianDigits(r.xp_earned)} امتیاز</span>
                   <span>{displayJalaliDate(r.recap_date)}</span>
                 </div>
@@ -295,7 +295,7 @@ export const PassportPage: React.FC = () => {
 
       {/* Achievements */}
       <div className="relative z-10 space-y-4">
-        <div className="flex items-center justify-end gap-2 text-white/20 text-[10px] font-black uppercase tracking-[0.4em]">
+        <div className="flex items-center justify-end gap-2 text-rava-xs font-black uppercase tracking-[0.4em] text-white/20">
           <span>دستاوردها</span>
           <Award size={12} />
         </div>
@@ -303,23 +303,23 @@ export const PassportPage: React.FC = () => {
           {achievements.map((a) => (
             <div
               key={a.id || a.code}
-              className={`rounded-2xl p-4 border text-right space-y-1 ${
+              className={`space-y-1 rounded-rava-lg border p-4 text-right ${
                 a.unlocked
-                  ? 'bg-yellow-500/10 border-yellow-500/30'
-                  : 'bg-white/[0.02] border-white/5 opacity-40'
+                  ? 'border-rava-gold/30 bg-rava-gold/10'
+                  : 'border-white/5 bg-white/[0.02] opacity-40'
               }`}
             >
               <div className="flex items-center justify-between">
                 <Star
                   size={14}
-                  className={a.unlocked ? 'text-yellow-500' : 'text-white/20'}
+                  className={a.unlocked ? 'text-rava-gold' : 'text-white/20'}
                   fill={a.unlocked ? 'currentColor' : 'none'}
                 />
-                <span className="text-[10px] font-black text-white">
+                <span className="text-rava-xs font-black text-white">
                   {a.title_fa || a.title}
                 </span>
               </div>
-              <p className="text-[8px] text-white/30 font-bold">
+              <p className="text-rava-xs font-bold text-white/30">
                 {toPersianDigits(a.xp_threshold)} امتیاز
               </p>
             </div>

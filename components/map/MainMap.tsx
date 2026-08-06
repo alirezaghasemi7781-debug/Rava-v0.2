@@ -40,15 +40,15 @@ const CuratedMarker = React.memo(({ poi, onClick, isActive }: {
       anchorTop="-50%"
     >
       <div className={`relative cursor-pointer transition-transform active:scale-95 group ${isActive ? 'scale-125' : ''}`}>
-        <div className={`bg-white p-1 rounded-full border-2 border-yellow-500 group-hover:scale-110 transition-transform ${
-          isActive ? 'shadow-[0_0_40px_rgba(234,179,8,0.9)] ring-2 ring-yellow-300' : 'shadow-[0_0_30px_rgba(234,179,8,0.6)]'
+        <div className={`rounded-full border-2 border-rava-gold bg-white p-1 transition-transform group-hover:scale-110 ${
+          isActive ? 'shadow-[0_0_40px_rgba(234,179,8,0.9)] ring-2 ring-rava-gold/50' : 'shadow-[0_0_30px_rgba(234,179,8,0.6)]'
         }`}>
-          <div className="bg-yellow-500 p-2 rounded-full">
-             <Star size={18} className="text-black fill-current" />
+          <div className="rounded-full bg-rava-gold p-2">
+             <Star size={18} className="fill-current text-black" />
           </div>
         </div>
-        <div className="absolute -bottom-8 start-1/2 -translate-x-1/2 glass px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-[1000] pointer-events-none text-black">
-           <span className="text-[10px] font-black">{poi.name}</span>
+        <div className="pointer-events-none absolute -bottom-8 start-1/2 z-[1000] -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 opacity-0 transition-opacity group-hover:opacity-100 glass text-black">
+           <span className="text-rava-xs font-black">{poi.name}</span>
         </div>
       </div>
     </AdvancedMarker>
@@ -74,7 +74,7 @@ const FootprintMarker = React.memo(({ fp, onClick }: {
     >
       <div className={`relative transition-all cursor-pointer active:scale-90 ${fp.is_verified === false ? 'opacity-40 grayscale-[0.5]' : 'opacity-80'}`}>
         <div className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 shadow-xl">
-          <StepIcon size={14} className={fp.is_verified === false ? 'text-white' : 'text-yellow-500'} />
+          <StepIcon size={14} className={fp.is_verified === false ? 'text-white' : 'text-rava-gold'} />
         </div>
       </div>
     </AdvancedMarker>

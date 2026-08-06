@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion as _motion } from 'framer-motion';
 import {
   Plane,
@@ -48,7 +48,7 @@ const getColor = (type: string) => {
     case 'flight':
       return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
     case 'hotel':
-      return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
+      return 'text-rava-gold bg-rava-gold/10 border-rava-gold/20';
     case 'food':
       return 'text-green-400 bg-green-400/10 border-green-400/20';
     default:
@@ -64,6 +64,8 @@ const statusLabel: Record<string, string> = {
   completed: 'انجام شد',
   skipped: 'رد شد',
 };
+
+const actionClass = 'flex items-center gap-1 rounded-rava-md px-3 py-2 text-rava-xs font-bold';
 
 export const TimelineEvent: React.FC<TimelineEventProps> = ({
   event,
@@ -138,22 +140,22 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
   };
 
   return (
-    <div className="relative pl-6">
+    <div className="relative ps-6 pb-4">
       {!isLast && (
         <div
-          className={`absolute top-8 right-[7px] w-0.5 bottom-[-24px] ${
-            isNow ? 'bg-gradient-to-b from-yellow-500 to-white/10' : 'bg-white/10'
+          className={`absolute top-8 start-[7px] bottom-[-24px] w-0.5 ${
+            isNow ? 'bg-gradient-to-b from-rava-gold to-white/10' : 'bg-white/10'
           }`}
         />
       )}
 
       <div
-        className={`absolute right-0 top-1 w-4 h-4 rounded-full border-2 z-10 ${
+        className={`absolute start-0 top-1 z-10 h-4 w-4 rounded-full border-2 ${
           isNow
-            ? 'bg-yellow-500 border-yellow-200 shadow-[0_0_15px_rgba(234,179,8,0.6)] animate-pulse'
+            ? 'animate-pulse border-yellow-200 bg-rava-gold shadow-[0_0_15px_rgba(234,179,8,0.6)]'
             : done
-              ? 'bg-white/30 border-white/40'
-              : 'bg-black border-white/20'
+              ? 'border-white/40 bg-white/30'
+              : 'border-white/20 bg-black'
         }`}
       />
 
@@ -161,87 +163,73 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: index * 0.05 }}
-        className={`relative glass rounded-[1.8rem] p-5 border ${
-          isNow ? 'border-yellow-500/30' : done ? 'border-white/5 opacity-70' : 'border-white/5'
-        } overflow-hidden group`}
+        className={`group relative overflow-hidden rounded-rava-xl border glass p-5 ${
+          isNow ? 'border-rava-gold/30' : done ? 'border-white/5 opacity-70' : 'border-white/5'
+        }`}
       >
         {isNow && (
-          <div className="absolute top-0 right-0 w-16 h-16 bg-yellow-500/10 blur-xl rounded-full pointer-events-none" />
+          <div className="pointer-events-none absolute end-0 top-0 h-16 w-16 rounded-full bg-rava-gold/10 blur-xl" />
         )}
 
-        <div className="flex justify-between items-start mb-3">
+        <div className="mb-3 flex items-start justify-between">
+          <div className={`rounded-xl border p-2 ${colorClass}`}>
+            <Icon size={18} />
+          </div>
           <div className="flex items-center gap-2">
             <span
-              className={`text-[10px] font-black tracking-widest bg-black/40 px-2 py-1 rounded-lg ${
-                isNow ? 'text-yellow-500' : 'text-white/30'
+              className={`rounded-lg bg-black/40 px-2 py-1 text-rava-xs font-black tracking-widest ${
+                isNow ? 'text-rava-gold' : 'text-white/30'
               }`}
             >
               {event.time}
             </span>
-            <span className="text-[9px] font-bold text-white/25 uppercase">
-              {statusLabel[event.status] || event.status}
-            </span>
-          </div>
-          <div className={`p-2 rounded-xl ${colorClass}`}>
-            <Icon size={18} />
+            <span className="text-rava-xs font-bold text-white/25">{statusLabel[event.status] || event.status}</span>
           </div>
         </div>
 
-        <h4 className={`text-lg font-black mb-1 ${isNow ? 'text-white' : 'text-white/80'}`}>
-          {event.title}
-        </h4>
+        <h4 className={`mb-1 text-lg font-black ${isNow ? 'text-white' : 'text-white/80'}`}>{event.title}</h4>
 
         {(event.placeName || event.details.address) && (
-          <p className="text-white/40 text-[10px] leading-relaxed mb-3 truncate">
+          <p className="mb-3 truncate text-rava-xs leading-relaxed text-white/40">
             {event.placeName || event.details.address}
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {event.details.flightNo && (
-            <div className="bg-white/5 rounded-xl p-2 text-center">
-              <span className="block text-white/20 text-[8px] uppercase">Flight</span>
-              <span className="block text-white font-mono text-xs tracking-wider">
-                {event.details.flightNo}
-              </span>
+            <div className="rounded-xl bg-white/5 p-2 text-center">
+              <span className="block text-rava-xs uppercase text-white/20">Flight</span>
+              <span className="block font-mono text-xs tracking-wider text-white">{event.details.flightNo}</span>
             </div>
           )}
           {event.details.gate && (
-            <div className="bg-white/5 rounded-xl p-2 text-center">
-              <span className="block text-white/20 text-[8px] uppercase">Gate</span>
-              <span className="block text-white font-black text-xs">{event.details.gate}</span>
+            <div className="rounded-xl bg-white/5 p-2 text-center">
+              <span className="block text-rava-xs uppercase text-white/20">Gate</span>
+              <span className="block text-xs font-black text-white">{event.details.gate}</span>
             </div>
           )}
           {event.details.seat && (
-            <div className="bg-white/5 rounded-xl p-2 text-center">
-              <span className="block text-white/20 text-[8px] uppercase">Seat</span>
-              <span className="block text-yellow-500 font-black text-xs">{event.details.seat}</span>
+            <div className="rounded-xl bg-white/5 p-2 text-center">
+              <span className="block text-rava-xs uppercase text-white/20">Seat</span>
+              <span className="block text-xs font-black text-rava-gold">{event.details.seat}</span>
             </div>
           )}
           {typeof event.details.price === 'number' && event.details.price > 0 && (
-            <div className="bg-white/5 rounded-xl p-2 text-center">
-              <span className="block text-white/20 text-[8px] uppercase">Cost</span>
-              <span className="block text-white font-black text-xs">{event.details.price}</span>
+            <div className="rounded-xl bg-white/5 p-2 text-center">
+              <span className="block text-rava-xs uppercase text-white/20">Cost</span>
+              <span className="block text-xs font-black text-white">{event.details.price}</span>
             </div>
           )}
         </div>
 
         {open && (
-          <div className="mt-4 pt-3 border-t border-white/5 flex flex-wrap gap-2 justify-end">
+          <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-white/5 pt-3">
             {!isNow && (
-              <button
-                disabled={busy}
-                onClick={() => run(() => startActivity(event.id))}
-                className="text-[10px] font-bold px-3 py-2 rounded-xl bg-yellow-500/15 text-yellow-500 flex items-center gap-1"
-              >
+              <button disabled={busy} onClick={() => run(() => startActivity(event.id))} className={`${actionClass} bg-rava-gold/15 text-rava-gold`}>
                 <Play size={12} /> شروع
               </button>
             )}
-            <button
-              disabled={busy}
-              onClick={navigateTo}
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-white/5 text-white/70 flex items-center gap-1"
-            >
+            <button disabled={busy} onClick={navigateTo} className={`${actionClass} bg-white/5 text-white/70`}>
               <Navigation size={12} /> مسیریابی
             </button>
             <button
@@ -252,7 +240,7 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
                   onSuggestNext?.(next || null, 'complete');
                 })
               }
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-green-500/15 text-green-400 flex items-center gap-1"
+              className={`${actionClass} bg-green-500/15 text-green-400`}
             >
               <Check size={12} /> انجام
             </button>
@@ -264,7 +252,7 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
                   onSuggestNext?.(next || null, 'skip');
                 })
               }
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-white/5 text-white/40 flex items-center gap-1"
+              className={`${actionClass} bg-white/5 text-white/40`}
             >
               <SkipForward size={12} /> رد
             </button>
@@ -276,7 +264,7 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
                   run(() => rescheduleActivity(event.id, t));
                 }
               }}
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-white/5 text-white/40 flex items-center gap-1"
+              className={`${actionClass} bg-white/5 text-white/40`}
             >
               <Clock size={12} /> زمان
             </button>
@@ -293,26 +281,19 @@ export const TimelineEvent: React.FC<TimelineEventProps> = ({
                   );
                 }
               }}
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-white/5 text-white/40 flex items-center gap-1"
+              className={`${actionClass} bg-white/5 text-white/40`}
             >
               <RefreshCw size={12} /> عوض
             </button>
-            <button
-              disabled={busy}
-              onClick={() => run(() => removeTripEvent(event.id))}
-              className="text-[10px] font-bold px-3 py-2 rounded-xl bg-red-500/10 text-red-400 flex items-center gap-1"
-            >
+            <button disabled={busy} onClick={() => run(() => removeTripEvent(event.id))} className={`${actionClass} bg-red-500/10 text-red-400`}>
               <Trash2 size={12} /> حذف
             </button>
           </div>
         )}
 
         {done && event.coordinates && (
-          <div className="mt-4 pt-3 border-t border-white/5 flex justify-end">
-            <button
-              onClick={showOnMap}
-              className="text-[10px] font-bold text-white/60 flex items-center gap-1 group-hover:text-yellow-500 transition-colors"
-            >
+          <div className="mt-4 flex justify-end border-t border-white/5 pt-3">
+            <button onClick={showOnMap} className="flex items-center gap-1 text-rava-xs font-bold text-white/60 transition-colors group-hover:text-rava-gold">
               مشاهده روی نقشه <ArrowLeft size={12} />
             </button>
           </div>

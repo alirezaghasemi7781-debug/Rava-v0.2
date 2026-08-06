@@ -18,7 +18,7 @@ export const StatusRing: React.FC = () => {
   const ringColor = useMemo(() => {
     if (!isOnline) return 'stroke-neutral-600'; // حالت آفلاین
     if (fuelMinutes > 20) return 'stroke-green-500';
-    if (fuelMinutes > 5) return 'stroke-yellow-500';
+    if (fuelMinutes > 5) return 'stroke-rava-gold';
     return 'stroke-red-500';
   }, [fuelMinutes, isOnline]);
 

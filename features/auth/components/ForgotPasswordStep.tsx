@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion as _motion } from 'framer-motion';
-import { Mail, Loader2, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Mail, Loader2, ChevronLeft, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { AudioGraph } from '../../../services/audioGraph';
+import { Input, Button } from '../../../components/ui';
 
 const motion = _motion as any;
 
@@ -12,11 +13,7 @@ interface ForgotPasswordStepProps {
   onBack: () => void;
 }
 
-export const ForgotPasswordStep: React.FC<ForgotPasswordStepProps> = ({
-  email,
-  onEmailChange,
-  onBack,
-}) => {
+export const ForgotPasswordStep: React.FC<ForgotPasswordStepProps> = ({ email, onEmailChange, onBack }) => {
   const resetPassword = useAuthStore((s) => s.resetPassword);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -48,92 +45,36 @@ export const ForgotPasswordStep: React.FC<ForgotPasswordStepProps> = ({
 
   if (sent) {
     return (
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: 20 }}
-        className="space-y-8 text-center"
-      >
-        <div className="w-16 h-16 mx-auto rounded-3xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-green-500">
-          <CheckCircle2 size={32} />
+      <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} className="space-y-6 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-rava-modal border border-green-500/20 bg-green-500/10 text-green-500">
+          <CheckCircle2 size={30} />
         </div>
         <div className="space-y-2">
-          <h2 className="text-2xl font-black text-white">ایمیل ارسال شد</h2>
-          <p className="text-white/40 text-xs font-bold leading-relaxed">
-            لینک بازیابی رمز به{' '}
-            <span className="text-white/70 font-mono" dir="ltr">
-              {email}
-            </span>{' '}
-            فرستاده شد. اینباکس و اسپم رو چک کن.
+          <h2 className="rava-page-title text-2xl">ایمیل ارسال شد</h2>
+          <p className="text-rava-sm leading-relaxed text-white/40">
+            لینک بازیابی رمز به <span className="font-mono text-white/70" dir="ltr">{email}</span> فرستاده شد. اینباکس و اسپم رو چک کن.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onBack}
-          className="w-full bg-white text-black py-5 rounded-[1.5rem] font-black text-lg active:scale-[0.98] transition-all"
-        >
-          بازگشت به ورود
-        </button>
+        <Button fullWidth variant="secondary" size="lg" onClick={onBack}>بازگشت به ورود</Button>
       </motion.div>
     );
   }
 
   return (
-    <motion.form
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
-      onSubmit={handleSubmit}
-      className="space-y-8"
-    >
-      <div className="text-right space-y-3">
-        <div className="flex justify-between items-center flex-row-reverse">
-          <h2 className="text-2xl font-black text-white">بازیابی رمز</h2>
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-1 text-[9px] font-black text-white/20 uppercase hover:text-yellow-500/60 transition-colors"
-          >
-            <span>بازگشت</span>
-            <ChevronRight size={12} />
-          </button>
+    <motion.form initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-2 text-right">
+        <div className="flex items-center justify-between">
+          <Button type="button" variant="ghost" size="sm" onClick={onBack} leadingIcon={<ChevronLeft size={14} />}>
+            بازگشت
+          </Button>
+          <h2 className="rava-page-title text-xl">بازیابی رمز</h2>
         </div>
-        <p className="text-white/40 text-xs font-bold leading-relaxed">
-          لینک تنظیم رمز جدید برات ایمیل می‌شه.
-        </p>
+        <p className="text-rava-sm leading-relaxed text-white/40">لینک تنظیم رمز جدید برات ایمیل می‌شه.</p>
       </div>
 
-      <div className="relative group">
-        <input
-          type="email"
-          required
-          dir="ltr"
-          value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
-          placeholder="example@mail.com"
-          className="w-full bg-white/[0.02] border border-white/10 rounded-[1.5rem] py-5 px-6 text-white text-left outline-none focus:border-yellow-500/40 focus:bg-white/[0.05] transition-all font-mono text-sm ltr-island min-h-[52px]"
-        />
-        <Mail
-          className="absolute end-5 top-1/2 -translate-y-1/2 text-white/10 group-focus-within:text-yellow-500/40 transition-colors pointer-events-none"
-          size={18}
-        />
-      </div>
+      <Input type="email" required ltr value={email} onChange={(e) => onEmailChange(e.target.value)} placeholder="example@mail.com" icon={<Mail size={16} />} error={error} />
 
-      {error && (
-        <p className="text-red-400 text-[10px] font-bold text-right">{error}</p>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full bg-yellow-500 text-black py-5 rounded-[1.5rem] font-black text-lg flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] transition-all disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="animate-spin" size={20} />
-        ) : (
-          <span>ارسال لینک بازیابی</span>
-        )}
-      </button>
+      <Button type="submit" fullWidth size="lg" loading={loading}>ارسال لینک بازیابی</Button>
     </motion.form>
   );
 };

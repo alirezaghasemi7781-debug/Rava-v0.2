@@ -26,9 +26,9 @@ export const PlaceChip: React.FC<PlaceChipProps> = ({ place }) => {
     <button
       type="button"
       onClick={open}
-      className="shrink-0 w-36 text-right active:scale-[0.97] transition-transform"
+      className="shrink-0 w-[7.5rem] text-right active:scale-[0.98] transition-transform"
     >
-      <div className="h-28 w-36 rounded-[1.25rem] overflow-hidden border border-white/5 bg-white/[0.03] mb-2 relative">
+      <div className="h-[5.25rem] w-full rounded-xl overflow-hidden border border-white/5 bg-white/[0.03] mb-1.5 relative">
         {place.image ? (
           <img
             src={getOptimizedImageUrl(place.image, 320)}
@@ -42,13 +42,13 @@ export const PlaceChip: React.FC<PlaceChipProps> = ({ place }) => {
           </div>
         )}
         {place.rating != null && place.rating > 0 && (
-          <span className="absolute bottom-1 start-1 text-[9px] font-black bg-black/70 text-yellow-500 px-1.5 py-0.5 rounded-lg ltr-island">
+          <span className="absolute bottom-1 start-1 rounded-rava-md bg-black/70 px-1.5 py-0.5 text-rava-xs font-black text-rava-gold ltr-island">
             ★ {place.rating.toFixed(1)}
           </span>
         )}
       </div>
-      <p className="text-white text-[11px] font-black truncate leading-tight">{place.name}</p>
-      <p className="text-white/30 text-[9px] font-bold mt-0.5 truncate">{place.category}</p>
+      <p className="truncate text-rava-sm font-bold leading-tight text-white">{place.name}</p>
+      <p className="mt-0.5 truncate text-rava-xs font-medium text-white/30">{place.category}</p>
     </button>
   );
 };

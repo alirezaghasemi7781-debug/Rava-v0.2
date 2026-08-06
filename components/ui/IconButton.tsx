@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -10,16 +10,16 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const sizeClass = {
-  sm: 'w-11 h-11 min-w-[44px] min-h-[44px]',
-  md: 'w-12 h-12 min-w-[44px] min-h-[44px]',
-  lg: 'w-14 h-14 min-w-[56px] min-h-[56px]',
+  sm: 'h-11 w-11 min-h-tap min-w-tap',
+  md: 'h-12 w-12 min-h-tap min-w-tap',
+  lg: 'h-14 w-14 min-h-[56px] min-w-[56px]',
 };
 
 const variantClass = {
-  glass: 'glass text-white/80 hover:text-white border-white/5',
+  glass: 'glass border-white/5 text-white/80 hover:text-white',
   solid: 'bg-white/10 text-white hover:bg-white/15',
-  ghost: 'bg-transparent text-white/50 hover:text-white hover:bg-white/5',
-  gold: 'bg-yellow-500 text-black shadow-lg',
+  ghost: 'bg-transparent text-white/50 hover:bg-white/5 hover:text-white',
+  gold: 'bg-rava-gold text-black shadow-gold',
 };
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -37,13 +37,12 @@ export const IconButton: React.FC<IconButtonProps> = ({
     aria-label={label}
     title={label}
     disabled={disabled}
-    className={`
-      ${sizeClass[size]} ${variantClass[variant]}
-      rounded-full flex items-center justify-center
-      active:scale-[0.97] transition-all
-      disabled:opacity-[var(--state-disabled-opacity,0.4)] disabled:pointer-events-none
-      ${className}
-    `}
+    className={[
+      sizeClass[size],
+      variantClass[variant],
+      'flex items-center justify-center rounded-full transition-all active:scale-[0.97] disabled:pointer-events-none disabled:opacity-[var(--state-disabled-opacity,0.4)]',
+      className,
+    ].join(' ')}
     {...rest}
   >
     <Icon size={iconSize} />

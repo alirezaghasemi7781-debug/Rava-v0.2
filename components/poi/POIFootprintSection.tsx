@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion as _motion } from 'framer-motion';
 import { Send, Loader2, Footprints as StepsIcon } from 'lucide-react';
@@ -14,54 +13,66 @@ interface POIFootprintSectionProps {
   onSubmit: () => void;
 }
 
-export const POIFootprintSection: React.FC<POIFootprintSectionProps> = ({ 
-  footprints, comment, isSubmitting, onCommentChange, onSubmit 
+export const POIFootprintSection: React.FC<POIFootprintSectionProps> = ({
+  footprints,
+  comment,
+  isSubmitting,
+  onCommentChange,
+  onSubmit,
 }) => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between px-2">
         <div className="flex -space-x-3 rtl:space-x-reverse">
-          {[1,2,3].map(i => (
-            <div key={i} className="w-8 h-8 rounded-full border-2 border-[#050505] bg-neutral-800" />
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-8 w-8 rounded-full border-2 border-rava-bg bg-neutral-800" />
           ))}
         </div>
-        <h4 className="text-white font-black text-2xl flex items-center gap-3">
-           ردپای مسافران <StepsIcon size={24} className="text-yellow-500" />
+        <h4 className="flex items-center gap-3 text-rava-lg font-black text-white">
+          ردپای مسافران <StepsIcon size={24} className="text-rava-gold" />
         </h4>
       </div>
-      
+
       <div className="space-y-5">
         {footprints.length === 0 ? (
-          <p className="text-white/20 text-center py-6 text-sm font-bold">هنوز کسی اینجا ردپایی نذاشته. اولین نفر باش!</p>
+          <p className="py-6 text-center text-rava-sm font-bold text-white/20">هنوز کسی اینجا ردپایی نذاشته. اولین نفر باش!</p>
         ) : (
-          footprints.map(f => (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} key={f.id} className="flex items-start gap-4 flex-row-reverse">
-              <div className="w-11 h-11 rounded-[1.2rem] bg-white/5 border border-white/10 flex items-center justify-center text-sm font-black text-white shrink-0 shadow-lg">
+          footprints.map((f) => (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              key={f.id}
+              className="flex flex-row-reverse items-start gap-4"
+            >
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-rava-lg border border-white/10 bg-white/5 text-rava-sm font-black text-white shadow-lg">
                 {f.user[0]}
               </div>
-              <div className="bg-white/[0.03] border border-white/5 p-5 rounded-[2rem] rounded-tr-none text-right flex-1 shadow-sm">
-                <div className="flex justify-between items-center mb-2 flex-row-reverse">
-                  <span className="text-yellow-500 font-black text-xs">{f.user}</span>
-                  <span className="text-white/20 text-[9px] font-bold">{f.date}</span>
+              <div className="flex-1 rounded-rava-xl rounded-te-none border border-white/5 bg-white/[0.03] p-5 text-right shadow-sm">
+                <div className="mb-2 flex flex-row-reverse items-center justify-between">
+                  <span className="text-rava-xs font-black text-rava-gold">{f.user}</span>
+                  <span className="text-rava-xs font-bold text-white/20">{f.date}</span>
                 </div>
-                <p className="text-white/80 text-sm leading-relaxed font-medium">{f.text}</p>
+                <p className="text-rava-sm font-medium leading-relaxed text-white/80">{f.text}</p>
               </div>
             </motion.div>
           ))
         )}
       </div>
-      
+
       <div className="relative mt-4">
-        <input 
-          type="text" placeholder="تجربه‌ت رو اینجا ثبت کن..."
-          value={comment} onChange={(e) => onCommentChange(e.target.value)}
+        <input
+          type="text"
+          placeholder="تجربه‌ت رو اینجا ثبت کن..."
+          value={comment}
+          onChange={(e) => onCommentChange(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSubmit()}
-          className="w-full bg-white/5 border border-white/10 rounded-[2.2rem] py-5 pr-7 pl-16 text-white text-right outline-none focus:border-yellow-500/40 transition-all text-sm font-medium"
+          className="rava-input w-full pe-16 text-right"
         />
-        <button 
+        <button
+          type="button"
           onClick={onSubmit}
           disabled={isSubmitting || !comment.trim()}
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-yellow-500 rounded-2xl flex items-center justify-center text-black active:scale-90 transition-all shadow-xl disabled:opacity-30"
+          className="absolute start-3 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-rava-lg bg-rava-gold text-black shadow-xl transition-all active:scale-90 disabled:opacity-30"
         >
           {isSubmitting ? <Loader2 size={20} className="animate-spin" /> : <Send size={22} />}
         </button>

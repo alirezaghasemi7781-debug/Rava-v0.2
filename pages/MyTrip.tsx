@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 import {
   ScanLine,
@@ -39,7 +39,7 @@ const STATUS_UI: Record<
   active: {
     label: 'سفر فعال',
     hint: 'برنامه امروز به ترتیب — شروع، مسیریابی، انجام یا رد.',
-    color: 'text-yellow-500',
+    color: 'text-rava-gold',
   },
   paused: {
     label: 'متوقف',
@@ -57,6 +57,8 @@ const STATUS_UI: Record<
     color: 'text-red-400',
   },
 };
+
+const actionClass = 'inline-flex items-center gap-1 rounded-rava-lg px-4 py-2 text-rava-xs font-black';
 
 export const MyTrip: React.FC = () => {
   const {
@@ -100,24 +102,22 @@ export const MyTrip: React.FC = () => {
   };
 
   return (
-    <div className="h-full overflow-y-auto page-pad pt-6 no-scrollbar">
-      <div className="flex justify-between items-end mb-6">
+    <div className="page-pad h-full overflow-y-auto pt-6 no-scrollbar">
+      <div className="mb-6 flex items-end justify-between">
         <div className="text-right">
-          <h2 className="text-white/40 text-xs font-black tracking-widest mb-1">
-            راوا · سفر من
-          </h2>
-          <div className="flex items-center gap-2 justify-end">
-            <span className="text-white text-3xl font-black tracking-tighter ltr-island" dir="ltr">
+          <h2 className="mb-1 text-rava-xs font-black tracking-widest text-white/40">راوا · سفر من</h2>
+          <div className="flex items-center justify-end gap-2">
+            <span className="ltr-island text-3xl font-black tracking-tighter text-white" dir="ltr">
               {wallet.xp}
             </span>
-            <span className="text-yellow-500 font-black text-xs">امتیاز</span>
+            <span className="text-rava-xs font-black text-rava-gold">امتیاز</span>
           </div>
-          <p className={`text-[11px] font-black mt-2 ${meta.color}`}>{meta.label}</p>
+          <p className={`mt-2 text-rava-xs font-black ${meta.color}`}>{meta.label}</p>
           {activeTrip && (
-            <p className="text-white/30 text-[10px] mt-1">
+            <p className="mt-1 text-rava-xs text-white/30">
               {activeTrip.title} · {activeTrip.city}
               {(activeTrip.startDate || activeTrip.endDate) && (
-                <span className="block mt-0.5">
+                <span className="mt-0.5 block">
                   {displayJalaliDate(activeTrip.startDate)}
                   {activeTrip.endDate ? ` — ${displayJalaliDate(activeTrip.endDate)}` : ''}
                 </span>
@@ -128,67 +128,45 @@ export const MyTrip: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowScanner(true)}
-          className="glass p-4 min-w-[52px] min-h-[52px] rounded-3xl text-yellow-500 border-yellow-500/20 active:scale-95 transition-transform flex items-center justify-center"
+          className="tap-target flex items-center justify-center rounded-rava-xl border border-rava-gold/20 glass p-4 text-rava-gold transition-transform active:scale-95"
           aria-label="اسکن بلیط"
         >
-          <ScanLine size={24} />
+          <ScanLine size={22} />
         </button>
       </div>
 
-      <p className="text-white/35 text-xs leading-relaxed mb-6 text-right">{meta.hint}</p>
+      <p className="mb-6 text-right text-rava-sm leading-relaxed text-white/35">{meta.hint}</p>
 
-      {/* Lifecycle controls */}
-      <div className="flex flex-wrap gap-2 justify-end mb-6">
+      <div className="mb-6 flex flex-wrap justify-end gap-2">
         {(status === 'upcoming' || status === 'planning') && activeTrip && (
-          <button
-            onClick={() => startTrip()}
-            className="px-4 py-2 rounded-2xl bg-yellow-500 text-black text-[11px] font-black flex items-center gap-1"
-          >
+          <button onClick={() => startTrip()} className={`${actionClass} bg-rava-gold text-black`}>
             <Play size={14} /> شروع سفر
           </button>
         )}
         {status === 'active' && (
           <>
-            <button
-              onClick={() => pauseTrip()}
-              className="px-4 py-2 rounded-2xl bg-white/10 text-white text-[11px] font-black flex items-center gap-1"
-            >
+            <button onClick={() => pauseTrip()} className={`${actionClass} bg-white/10 text-white`}>
               <Pause size={14} /> توقف
             </button>
-            <button
-              onClick={() => completeTrip()}
-              className="px-4 py-2 rounded-2xl bg-green-500/20 text-green-400 text-[11px] font-black flex items-center gap-1"
-            >
+            <button onClick={() => completeTrip()} className={`${actionClass} bg-green-500/20 text-green-400`}>
               <Flag size={14} /> پایان سفر
             </button>
           </>
         )}
         {status === 'paused' && (
-          <button
-            onClick={() => resumeTrip()}
-            className="px-4 py-2 rounded-2xl bg-yellow-500 text-black text-[11px] font-black flex items-center gap-1"
-          >
+          <button onClick={() => resumeTrip()} className={`${actionClass} bg-rava-gold text-black`}>
             <Play size={14} /> ادامه سفر
           </button>
         )}
         {activeTrip && status !== 'completed' && status !== 'cancelled' && (
-          <button
-            onClick={() => cancelTrip()}
-            className="px-4 py-2 rounded-2xl bg-red-500/10 text-red-400 text-[11px] font-black flex items-center gap-1"
-          >
+          <button onClick={() => cancelTrip()} className={`${actionClass} bg-red-500/10 text-red-400`}>
             <XCircle size={14} /> لغو
           </button>
         )}
-        <button
-          onClick={() => setShowRecap(true)}
-          className="px-4 py-2 rounded-2xl bg-white/10 text-white/80 text-[11px] font-black flex items-center gap-1"
-        >
+        <button onClick={() => setShowRecap(true)} className={`${actionClass} bg-white/10 text-white/80`}>
           <BookOpen size={14} /> خلاصه امروز
         </button>
-        <button
-          onClick={() => setShowTemplates((v) => !v)}
-          className="px-4 py-2 rounded-2xl bg-white/5 text-white/50 text-[11px] font-black flex items-center gap-1"
-        >
+        <button onClick={() => setShowTemplates((v) => !v)} className={`${actionClass} bg-white/5 text-white/50`}>
           <Route size={14} /> قالب‌ها
         </button>
       </div>
@@ -199,7 +177,7 @@ export const MyTrip: React.FC = () => {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mb-4 bg-yellow-500/15 border border-yellow-500/30 rounded-2xl px-4 py-3 text-yellow-500 text-xs font-bold text-right"
+            className="mb-4 rounded-rava-lg border border-rava-gold/30 bg-rava-gold/15 px-4 py-3 text-right text-rava-sm font-bold text-rava-gold"
           >
             {suggest.title}
           </motion.div>
@@ -218,59 +196,33 @@ export const MyTrip: React.FC = () => {
         </div>
       )}
 
-      <SafeHavenCard />
-
-      <div className="mt-12">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={() => setShowScanner(true)}
-            className="p-2 bg-white/5 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-          >
-            <Plus size={20} />
-          </button>
-          <h3 className="text-white font-black text-xl">
-            {status === 'active' ? 'برنامه امروز' : 'تایم‌لاین سفر شما'}
-          </h3>
-        </div>
-
-        <div className="relative border-r-2 border-dashed border-white/5 mr-4 pr-8 space-y-6 pb-12">
-          {todaysList.length === 0 ? (
-            <div className="text-center py-10 opacity-50">
-              <p className="text-white/40 text-sm">هنوز برنامه‌ای نچیدی!</p>
-            </div>
-          ) : (
-            todaysList.map((event, idx) => (
-              <TimelineEvent
-                key={event.id}
-                event={event}
-                index={idx}
-                isLast={idx === todaysList.length - 1}
-                onSuggestNext={handleSuggest}
-              />
-            ))
-          )}
-
-          <div className="relative opacity-30 pt-4">
-            <div className="absolute -right-[43px] top-4 w-3 h-3 rounded-full bg-white/20" />
-            <button
-              onClick={() => setShowScanner(true)}
-              className="w-full border-2 border-dashed border-white/10 rounded-[2rem] p-6 text-center hover:bg-white/5 transition-colors"
-            >
-              <p className="text-white/40 text-xs font-bold">+ افزودن برنامه جدید</p>
-            </button>
-          </div>
-        </div>
+      <div className="mb-8">
+        <SafeHavenCard />
       </div>
 
-      {activeTrip?.status === 'completed' && activeTrip.passportEntry && (
-        <div className="mb-8 glass rounded-[2rem] p-5 border border-green-500/20 text-right">
-          <p className="text-green-400 text-[10px] font-black mb-2">پاسپورت</p>
-          <p className="text-white font-bold text-sm">{activeTrip.passportEntry}</p>
+      {todaysList.length > 0 && (
+        <div className="relative me-4 border-e-2 border-white/10 pe-6">
+          {todaysList.map((event, idx) => (
+            <TimelineEvent
+              key={event.id}
+              event={event}
+              index={idx}
+              isLast={idx === todaysList.length - 1}
+              onSuggestNext={handleSuggest}
+            />
+          ))}
         </div>
       )}
 
-      {showScanner && <TicketScanner onClose={() => setShowScanner(false)} />}
-      <DailyRecapModal open={showRecap} onClose={() => setShowRecap(false)} />
+      {todaysList.length === 0 && !showTemplates && (
+        <div className="mt-10 rounded-rava-modal border border-white/5 glass p-8 text-center text-rava-sm text-white/40">
+          <Plus size={20} className="mx-auto mb-3 text-rava-gold" />
+          برنامه‌ای برای امروز نداری. از قالب‌ها شروع کن یا بلیطت را اسکن کن.
+        </div>
+      )}
+
+      <TicketScanner isOpen={showScanner} onClose={() => setShowScanner(false)} />
+      <DailyRecapModal isOpen={showRecap} onClose={() => setShowRecap(false)} />
     </div>
   );
 };

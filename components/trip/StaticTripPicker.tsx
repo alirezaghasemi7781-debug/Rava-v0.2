@@ -5,6 +5,7 @@ import { getStaticTripsForCity } from '../../data/staticTrips';
 import { useUserStore } from '../../store/useUserStore';
 import { CityMode } from '../../types';
 import { AudioGraph } from '../../services/audioGraph';
+import { Button } from '../ui';
 
 const motion = _motion as any;
 
@@ -43,42 +44,35 @@ export const StaticTripPicker: React.FC<StaticTripPickerProps> = ({ cityFilter, 
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <span className="text-white/30 text-[10px] font-black tracking-widest">قالب‌ها</span>
-        <h3 className="text-white font-black text-lg">برنامه‌های آماده راوا</h3>
+      <div className="flex items-center justify-between">
+        <span className="text-rava-xs font-black tracking-widest text-white/30">قالب‌ها</span>
+        <h3 className="text-rava-lg font-black text-white">برنامه‌های آماده راوا</h3>
       </div>
-      {msg && <p className="text-yellow-500/80 text-xs font-bold text-right">{msg}</p>}
+      {msg && <p className="text-right text-rava-xs font-bold text-rava-gold/80">{msg}</p>}
       <div className="space-y-3">
         {templates.map((t) => (
-          <motion.div
-            key={t.id}
-            layout
-            className="glass rounded-[1.8rem] p-4 border border-white/5 text-right"
-          >
-            <div className="flex justify-between items-start gap-3 mb-2">
-              <button
+          <motion.div key={t.id} layout className="glass rounded-rava-xl border border-white/5 p-4 text-right">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <Button
+                size="sm"
                 onClick={() => clone(t.id)}
                 disabled={!!busyId}
-                className="shrink-0 px-3 py-2 rounded-xl bg-yellow-500 text-black text-[10px] font-black flex items-center gap-1 active:scale-95"
+                loading={busyId === t.id}
+                leadingIcon={busyId !== t.id ? <Copy size={12} /> : undefined}
               >
-                {busyId === t.id ? <Loader2 size={12} className="animate-spin" /> : <Copy size={12} />}
                 کپی کن
-              </button>
+              </Button>
               <div>
-                <h4 className="text-white font-black text-sm">{t.titleFa}</h4>
-                <p className="text-white/35 text-[10px] mt-1 leading-relaxed">{t.description}</p>
+                <h4 className="text-rava-sm font-black text-white">{t.titleFa}</h4>
+                <p className="mt-1 text-rava-xs leading-relaxed text-white/35">{t.description}</p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2 justify-end mt-3">
-              <span className="text-[9px] font-bold text-white/25 bg-white/5 px-2 py-1 rounded-lg flex items-center gap-1">
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
+              <span className="rava-chip flex items-center gap-1">
                 <MapPinned size={10} /> {t.city}
               </span>
-              <span className="text-[9px] font-bold text-white/25 bg-white/5 px-2 py-1 rounded-lg">
-                {t.days} روز
-              </span>
-              <span className="text-[9px] font-bold text-yellow-500/70 bg-yellow-500/10 px-2 py-1 rounded-lg">
-                {t.budgetStyle}
-              </span>
+              <span className="rava-chip">{t.days} روز</span>
+              <span className="rava-chip rava-chip-active">{t.budgetStyle}</span>
             </div>
           </motion.div>
         ))}

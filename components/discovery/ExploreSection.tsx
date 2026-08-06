@@ -28,7 +28,7 @@ export const ExploreSection: React.FC<ExploreSectionProps> = ({
   <section className="space-y-4">
     <div className="flex items-center justify-end gap-2">
       <h3 className="text-white font-black text-base">{title}</h3>
-      {Icon && <Icon size={16} className="text-yellow-500" />}
+      {Icon && <Icon size={16} className="text-rava-gold" />}
     </div>
 
     {loading ? (

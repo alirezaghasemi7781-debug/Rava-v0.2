@@ -25,6 +25,7 @@ export const DailyCurator: React.FC = () => {
   const [isPlanning, setIsPlanning] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [plan, setPlan] = useState<AIPlan | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const generatePlan = async () => {
     if (!cityMode) return;
@@ -98,7 +99,8 @@ export const DailyCurator: React.FC = () => {
 
       await Promise.all(promises);
       setPlan(null);
-      alert("برنامه امروزت توی تب 'سفر من' چیده شد رفیق! بزن بریم.");
+      setSuccessMsg("برنامه امروزت توی تب 'سفر من' چیده شد رفیق! بزن بریم.");
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch(err) {
       console.error("Sync to Timeline Failed:", err);
     } finally {
@@ -116,6 +118,11 @@ export const DailyCurator: React.FC = () => {
 
       {!plan ? (
         <div className="relative z-10 space-y-4">
+          {successMsg ? (
+            <p className="rounded-rava-lg border border-green-500/20 bg-green-500/10 p-3 text-right text-rava-xs font-bold text-green-400">
+              {successMsg}
+            </p>
+          ) : null}
           <p className="text-white/60 text-sm leading-relaxed text-right">
              رفیق هنوز برنامه‌ای نداری؟ راوا با هوش مصنوعی‌ش برات یه مسیر خفن می‌چینه که نه خسته شی، نه جای باحالی رو از دست بدی.
           </p>
@@ -141,7 +148,7 @@ export const DailyCurator: React.FC = () => {
                 >
                    <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${item.color.replace('text', 'bg')}`} />
                    <div>
-                      <span className={`text-[10px] font-black uppercase ${item.color}`}>{item.label}</span>
+                      <span className={`text-rava-xs font-black uppercase ${item.color}`}>{item.label}</span>
                       <p className="text-white text-xs font-bold leading-relaxed">{item.text}</p>
                    </div>
                 </motion.div>
@@ -156,7 +163,7 @@ export const DailyCurator: React.FC = () => {
              </button>
              <button 
                 onClick={() => setPlan(null)} 
-                className="flex-1 glass py-4 rounded-2xl text-white/40 text-[10px] font-black active:scale-95"
+                className="glass flex-1 rounded-rava-lg py-4 text-rava-xs font-black text-white/40 active:scale-95"
               >
                 لغو
               </button>

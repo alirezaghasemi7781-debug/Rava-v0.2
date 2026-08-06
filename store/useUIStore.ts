@@ -6,10 +6,12 @@ interface ExtendedUIState extends UIState {
   isInterrupting: boolean;
   isUserTalking: boolean;
   isPlayingNarrative: boolean;
-  
+  showCityPicker: boolean;
+
   setInterrupting: (val: boolean) => void;
   setUserTalking: (val: boolean) => void;
   setPlayingNarrative: (val: boolean) => void;
+  setShowCityPicker: (val: boolean) => void;
 }
 
 export const useUIStore = create<ExtendedUIState>((set) => ({
@@ -23,6 +25,7 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   isPlayingNarrative: false,
   showTranscript: false,
   showVision: false,
+  showCityPicker: false,
   captions: { user: '', ai: '' },
   rewardNotify: null,
   pendingToolConfirm: null,
@@ -37,6 +40,7 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   setPlayingNarrative: (val: boolean) => set({ isPlayingNarrative: val }),
   setShowTranscript: (val: boolean) => set({ showTranscript: val }),
   setShowVision: (val: boolean) => set({ showVision: val }),
+  setShowCityPicker: (val: boolean) => set({ showCityPicker: val }),
   setCaptions: (captions) => set({ captions }),
   setRewardNotify: (val) => set({ rewardNotify: val }),
   setPendingToolConfirm: (val: PendingToolConfirm | null) => set({ pendingToolConfirm: val }),

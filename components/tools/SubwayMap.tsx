@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion as _motion, AnimatePresence } from 'framer-motion';
 import { Map as MapIcon, Loader2, ZoomIn, ZoomOut, Maximize2, X, Navigation2, Zap } from 'lucide-react';
@@ -10,6 +9,7 @@ import { SUBWAY_STATIONS } from '../../constants';
 import { calculateDistance } from '../../utils/geoUtils';
 import { GeoPoint } from '../../utils/geoPoint';
 import { AudioGraph } from '../../services/audioGraph';
+import { IconButton } from '../ui';
 
 const motion = _motion as any;
 
@@ -22,13 +22,12 @@ export const SubwayMap: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const mapUrls = {
-    Istanbul: "https://www.metro.istanbul/Content/assets/img/rayli-sistemler-haritasi.png",
-    Dubai: "https://www.visitdubai.com/-/media/gathercontent/article/d/dubai-metro-guide/media/dubai-metro-guide-dubai-metro-map-1.jpg"
+    Istanbul: 'https://www.metro.istanbul/Content/assets/img/rayli-sistemler-haritasi.png',
+    Dubai: 'https://www.visitdubai.com/-/media/gathercontent/article/d/dubai-metro-guide/media/dubai-metro-guide-dubai-metro-map-1.jpg',
   };
 
   const currentMap = cityMode ? mapUrls[cityMode] : null;
 
-  // محاسبه هوشمند نزدیک‌ترین ایستگاه
   const nearestStation = useMemo(() => {
     const geo = GeoPoint.fromArray(userLocation);
     if (!geo || !cityMode || !SUBWAY_STATIONS[cityMode]) return null;
@@ -37,7 +36,7 @@ export const SubwayMap: React.FC = () => {
     let closest = stations[0];
     let minDistance = Infinity;
 
-    stations.forEach(st => {
+    stations.forEach((st) => {
       const dist = calculateDistance(geo.lat, geo.lng, st.lat, st.lng);
       if (dist < minDistance) {
         minDistance = dist;
@@ -50,7 +49,7 @@ export const SubwayMap: React.FC = () => {
 
   const handleZoom = (dir: 'in' | 'out') => {
     AudioGraph.getInstance().playTickSound();
-    setScale(prev => {
+    setScale((prev) => {
       const next = dir === 'in' ? prev + 0.5 : prev - 0.5;
       return Math.max(1, Math.min(5, next));
     });
@@ -63,28 +62,27 @@ export const SubwayMap: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center px-2">
-        <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">High-Res Offline Data</span>
-        <h4 className="text-white font-black text-lg flex items-center gap-2">
+      <div className="flex items-center justify-between px-2">
+        <span className="text-rava-xs font-black uppercase tracking-widest text-white/20">High-Res Offline Data</span>
+        <h4 className="flex items-center gap-2 text-rava-lg font-black text-white">
           نقشه مترو <MapIcon size={16} className="text-indigo-500" />
         </h4>
       </div>
 
       <AnimatePresence>
         {nearestStation && nearestStation.distance < 3000 && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-            className="px-2"
-          >
-            <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex items-center justify-between">
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="px-2">
+            <div className="flex items-center justify-between rounded-rava-lg border border-indigo-500/20 bg-indigo-500/10 p-4">
               <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center text-white shadow-lg animate-pulse">
-                    <Navigation2 size={20} />
-                 </div>
-                 <div className="text-right">
-                    <p className="text-white font-black text-xs">{nearestStation.name}</p>
-                    <p className="text-indigo-400 text-[9px] font-bold uppercase tracking-tighter">نزدیک‌ترین ایستگاه به شما • {nearestStation.distance} متر</p>
-                 </div>
+                <div className="flex h-10 w-10 animate-pulse items-center justify-center rounded-rava-md bg-indigo-500 text-white shadow-lg">
+                  <Navigation2 size={20} />
+                </div>
+                <div className="text-right">
+                  <p className="text-rava-xs font-black text-white">{nearestStation.name}</p>
+                  <p className="text-rava-xs font-bold uppercase tracking-tighter text-indigo-400">
+                    نزدیک‌ترین ایستگاه به شما • {nearestStation.distance} متر
+                  </p>
+                </div>
               </div>
               <Zap size={14} className="text-indigo-500/40" />
             </div>
@@ -92,46 +90,42 @@ export const SubwayMap: React.FC = () => {
         )}
       </AnimatePresence>
 
-      <GlassCard className="p-0 overflow-hidden relative group aspect-square border-indigo-500/20" ref={containerRef}>
+      <GlassCard className="group relative aspect-square overflow-hidden border-indigo-500/20 p-0" ref={containerRef}>
         {!currentMap ? (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 py-20 opacity-20">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-4 py-20 opacity-20">
             <MapIcon size={64} />
-            <p className="text-xs font-black">نقشه برای این شهر در دسترس نیست</p>
+            <p className="text-rava-xs font-black">نقشه برای این شهر در دسترس نیست</p>
           </div>
         ) : (
           <>
             <AnimatePresence>
               {isLoading && (
-                <motion.div 
-                  initial={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-20 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center gap-4"
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-black/80 backdrop-blur-xl"
                 >
-                  <Loader2 size={32} className="text-indigo-500 animate-spin" />
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">در حال دریافت نقشه بقا...</p>
+                  <Loader2 size={32} className="animate-spin text-indigo-500" />
+                  <p className="text-rava-xs font-black uppercase tracking-widest text-white/40">در حال دریافت نقشه بقا...</p>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <div className="w-full h-full relative overflow-hidden bg-neutral-900">
-              <motion.div
-                drag
-                dragConstraints={containerRef}
-                animate={{ scale }}
-                className="w-full h-full flex items-center justify-center cursor-move"
-              >
-                <img 
-                  src={currentMap} 
+            <div className="relative h-full w-full overflow-hidden bg-neutral-900">
+              <motion.div drag dragConstraints={containerRef} animate={{ scale }} className="flex h-full w-full cursor-move items-center justify-center">
+                <img
+                  src={currentMap}
                   onLoad={() => setIsLoading(false)}
-                  className="max-w-none w-[1200px] h-auto pointer-events-none" 
+                  className="pointer-events-none h-auto w-[1200px] max-w-none"
                   alt="Subway Map"
                 />
               </motion.div>
             </div>
 
-            <div className="absolute top-4 right-4 flex flex-col gap-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
-               <button onClick={() => handleZoom('in')} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg"><ZoomIn size={20} /></button>
-               <button onClick={() => handleZoom('out')} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg"><ZoomOut size={20} /></button>
-               <button onClick={toggleFullscreen} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-yellow-500 active:scale-90 transition-transform shadow-lg"><Maximize2 size={20} /></button>
+            <div className="absolute end-4 top-4 z-30 flex flex-col gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+              <IconButton icon={ZoomIn} label="بزرگ‌نمایی" onClick={() => handleZoom('in')} size="sm" />
+              <IconButton icon={ZoomOut} label="کوچک‌نمایی" onClick={() => handleZoom('out')} size="sm" />
+              <IconButton icon={Maximize2} label="تمام صفحه" onClick={toggleFullscreen} size="sm" className="text-rava-gold" />
             </div>
           </>
         )}
@@ -139,23 +133,25 @@ export const SubwayMap: React.FC = () => {
 
       <AnimatePresence>
         {isMapFullscreen && currentMap && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 1.1 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.1 }}
+          <motion.div
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }}
             className="fixed inset-0 z-[8000] bg-black"
           >
-            <div className="absolute top-12 left-8 z-50 flex items-center gap-4">
-              <button onClick={toggleFullscreen} className="w-14 h-14 glass rounded-2xl flex items-center justify-center text-white shadow-2xl active:scale-90 transition-transform"><X size={32} /></button>
-              <div className="glass px-4 py-2 rounded-xl text-white/60 text-[10px] font-black uppercase">Subway Master View</div>
+            <div className="absolute start-8 top-12 z-50 flex items-center gap-4 pt-safe">
+              <IconButton icon={X} label="بستن" onClick={toggleFullscreen} size="lg" />
+              <div className="glass rounded-rava-md px-4 py-2 text-rava-xs font-black uppercase text-white/60">Subway Master View</div>
             </div>
-            <div className="w-full h-full overflow-hidden">
-               <motion.div 
-                 drag 
-                 dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
-                 initial={{ scale: 1.8 }}
-                 className="w-full h-full flex items-center justify-center"
-               >
-                 <img src={currentMap} className="max-w-none w-[2000px]" alt="Subway Full" />
-               </motion.div>
+            <div className="h-full w-full overflow-hidden">
+              <motion.div
+                drag
+                dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
+                initial={{ scale: 1.8 }}
+                className="flex h-full w-full items-center justify-center"
+              >
+                <img src={currentMap} className="max-w-none w-[2000px]" alt="Subway Full" />
+              </motion.div>
             </div>
           </motion.div>
         )}

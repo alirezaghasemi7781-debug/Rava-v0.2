@@ -1,5 +1,6 @@
-import React from 'react';
+﻿import React from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from './Button';
 
 interface ErrorStateProps {
   title?: string;
@@ -16,24 +17,16 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   retryLabel = 'تلاش مجدد',
   className = '',
 }) => (
-  <div
-    className={`flex flex-col items-center justify-center py-10 px-4 text-center ${className}`}
-    role="alert"
-  >
-    <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-      <AlertCircle size={22} className="text-red-400" />
+  <div className={`flex flex-col items-center justify-center px-4 py-10 text-center ${className}`} role="alert">
+    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-rava-xl border border-rava-danger/20 bg-rava-danger/10 text-rava-danger">
+      <AlertCircle size={22} />
     </div>
-    <p className="text-white font-black text-sm">{title}</p>
-    <p className="text-white/40 text-xs mt-2 leading-relaxed max-w-[260px]">{message}</p>
-    {onRetry && (
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 min-h-[44px] px-5 rounded-2xl bg-yellow-500 text-black text-xs font-black flex items-center gap-2 active:scale-[0.97] transition-transform"
-      >
-        <RefreshCw size={14} />
+    <p className="text-rava-base font-black text-white">{title}</p>
+    <p className="mt-2 max-w-[260px] text-rava-sm leading-relaxed text-white/40">{message}</p>
+    {onRetry ? (
+      <Button className="mt-5" size="sm" onClick={onRetry} leadingIcon={<RefreshCw size={14} />}>
         {retryLabel}
-      </button>
-    )}
+      </Button>
+    ) : null}
   </div>
 );

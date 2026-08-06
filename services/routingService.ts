@@ -28,6 +28,23 @@ const MODE_MAP: Record<RouteMode, string> = {
   transit: 'TRANSIT',
 };
 
+function directionsStatusMessage(status: string): string {
+  switch (status) {
+    case 'REQUEST_DENIED':
+      return 'مسیریابی در دسترس نیست. کلید نقشه دمو است — Billing/API باید در Google Cloud فعال شود.';
+    case 'OVER_QUERY_LIMIT':
+      return 'محدودیت درخواست مسیریابی. کمی بعد دوباره تلاش کن.';
+    case 'ZERO_RESULTS':
+      return 'مسیری بین مبدا و مقصد پیدا نشد.';
+    case 'NOT_FOUND':
+      return 'مبدا یا مقصد پیدا نشد.';
+    case 'INVALID_REQUEST':
+      return 'درخواست مسیریابی نامعتبر است.';
+    default:
+      return `مسیریابی ناموفق بود (${status}).`;
+  }
+}
+
 class RoutingServiceImpl {
   private lastRenderer: any = null;
 
@@ -58,7 +75,7 @@ class RoutingServiceImpl {
         },
         (result: any, status: string) => {
           if (status !== 'OK' || !result?.routes?.[0]) {
-            reject(new Error(`Directions failed: ${status}`));
+            reject(new Error(directionsStatusMessage(status)));
             return;
           }
           resolve(this.normalizeJsResult(result, mode));
@@ -118,7 +135,7 @@ class RoutingServiceImpl {
     const res = await fetch(url);
     const data = await res.json();
     if (data.status !== 'OK' || !data.routes?.[0]) {
-      throw new Error(`Directions REST failed: ${data.status}`);
+      throw new Error(directionsStatusMessage(data.status || 'UNKNOWN'));
     }
 
     const route = data.routes[0];

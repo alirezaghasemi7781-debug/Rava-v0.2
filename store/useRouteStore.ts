@@ -34,11 +34,11 @@ export const useRouteStore = create<RouteState>((set, get) => ({
     const active = destination || useMapStore.getState().activePOI || useMapStore.getState().fullDetailPOI;
 
     if (!userLocation) {
-      set({ error: 'موقعیت شما در دسترس نیست.', isActive: false });
+      set({ error: 'موقعیت GPS در دسترس نیست. از تنظیمات مرورگر دسترسی موقعیت را فعال کن.', isActive: false, isCalculating: false });
       return;
     }
     if (!active || (active.lat === 0 && active.lng === 0)) {
-      set({ error: 'مقصد معتبری انتخاب نشده.', isActive: false });
+      set({ error: 'مختصات مقصد هنوز آماده نیست. چند لحظه صبر کن یا دوباره مکان را انتخاب کن.', isActive: false, isCalculating: false });
       return;
     }
 
@@ -67,6 +67,7 @@ export const useRouteStore = create<RouteState>((set, get) => ({
       console.error('[RouteStore]', err);
       set({
         isCalculating: false,
+        isActive: true,
         error: err?.message || 'مسیریابی ناموفق بود.',
         route: null,
       });
