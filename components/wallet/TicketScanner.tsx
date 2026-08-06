@@ -61,7 +61,7 @@ export const TicketScanner: React.FC<TicketScannerProps> = ({ onClose }) => {
                   <ScanLine size={40} />
                </div>
                <h2 className="text-4xl font-black text-white mb-4">اسکن جادویی</h2>
-               <p className="text-white/40 text-lg leading-relaxed">عکس بلیط یا واچر هتل رو بفرست تا هوش مصنوعی رهنما برات آنالیز و ثبتش کنه.</p>
+               <p className="text-white/40 text-lg leading-relaxed">عکس بلیط یا واچر هتل رو بفرست تا هوش مصنوعی راوا برات آنالیز و ثبتش کنه.</p>
             </div>
             <label className="block w-full py-10 rounded-[3rem] border-2 border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-6 cursor-pointer hover:border-yellow-500/40 transition-all group">
               <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />

@@ -132,15 +132,16 @@ export class AudioGraph {
   }
 
   // پخش استریم زنده (چانک‌های جمینی)
+  // نکته: برای Live از hard-mute استفاده نمی‌کنیم تا barge-in ممکن باشد؛
+  // فقط آستانه VAD بالا می‌رود تا اکو کمتر شود.
   async playChunk(base64Audio: string): Promise<void> {
     await this.initOutput();
     if (!this.outputCtx || !this.gainNode) return;
 
     // اگر فایلی در حال پخش است، آن را قطع کن (اولویت با صدای زنده است)
-    this.stopStaticFile(); 
-    
-    // فعال کردن گارد ورودی: وقتی جمینی حرف می‌زند، گوش‌ها کر می‌شوند
-    this.isInputMuted = true;
+    this.stopStaticFile();
+
+    this.setVadThreshold(VAD_THRESHOLDS.PROTECTED);
 
     try {
       const bytes = decodeBase64(base64Audio);
@@ -160,15 +161,15 @@ export class AudioGraph {
       source.onended = () => {
         this.scheduledSources.delete(source);
         if (this.scheduledSources.size === 0) {
-          // فقط وقتی تمام جملات تمام شد، گوش‌ها باز می‌شوند
-          this.isInputMuted = false;
+          this.setVadThreshold(VAD_THRESHOLDS.DEFAULT);
           if (this.onPlayStateChange) this.onPlayStateChange(false);
         }
       };
     } catch (e) {
       console.error("AudioGraph Live Playback Error:", e);
-      // در صورت خطا، مطمئن شویم گارد باز می‌شود
-      if (this.scheduledSources.size === 0) this.isInputMuted = false;
+      if (this.scheduledSources.size === 0) {
+        this.setVadThreshold(VAD_THRESHOLDS.DEFAULT);
+      }
     }
   }
 
@@ -320,25 +321,30 @@ export class AudioGraph {
       this.setVadThreshold(VAD_THRESHOLDS.DEFAULT);
 
       this.workletNode.port.onmessage = (e) => {
-        // گیت امنیتی: اگر سیستم در حال پخش است، ورودی را کاملاً نادیده بگیر
+        // hard-mute فقط برای روایت استاتیک (محافظت اکو) — Live نباید ورودی را بلاک کند
         if (this.isInputMuted) {
-          // اگر UI نیاز به آپدیت دارد که بگوید "گوش نمی‌دهم"، اینجا می‌توان هندل کرد
-          // اما فعلاً فقط دیتا را دور می‌ریزیم
           return;
         }
 
-        // اگر در حین پخش فایل، کاربر حرف زد (Barge-in)، فایل را قطع کن
-        // نکته: با فعال بودن isInputMuted، این بخش عملاً غیرفعال می‌شود مگر اینکه
-        // دکمه‌ای برای "Force Listen" داشته باشیم که فعلاً نداریم.
-        if (e.data.isTalking && this.staticSource) {
-            this.stopStaticFile();
+        const isTalking = !!e.data.isTalking;
+        const liveWasPlaying = this.scheduledSources.size > 0;
+
+        // Barge-in روی روایت استاتیک
+        if (isTalking && this.staticSource) {
+          this.stopStaticFile();
         }
 
+        // اول UI/interrupt را باخبر کن (در حالی که هنوز speaking=true است)، بعد صف را خالی کن
         if (this.onTalkingStateChange) {
-           this.onTalkingStateChange(!!e.data.isTalking);
+          this.onTalkingStateChange(isTalking);
         }
+
+        if (isTalking && liveWasPlaying) {
+          this.flushLive();
+        }
+
         if (e.data?.audio) {
-           onAudioData(e.data.audio, !!e.data.isTalking);
+          onAudioData(e.data.audio, isTalking);
         }
       };
 
@@ -367,14 +373,14 @@ export class AudioGraph {
     if (this.workletUrl) { URL.revokeObjectURL(this.workletUrl); this.workletUrl = null; }
   }
 
-  flush() {
+  /** فقط صف پخش Live را خالی می‌کند (برای barge-in) */
+  flushLive() {
     this.scheduledSources.forEach(s => {
-      try { s.stop(); } catch(e) {}
+      try { s.stop(); } catch (e) {}
     });
     this.scheduledSources.clear();
-    this.stopStaticFile(); // فلاش کردن فایل استاتیک هم اضافه شد
-    
-    this.isInputMuted = false; // ریست کردن گارد در صورت قطع دستی
+
+    this.setVadThreshold(VAD_THRESHOLDS.DEFAULT);
 
     if (this.outputCtx) {
       this.nextStartTime = this.outputCtx.currentTime;
@@ -382,8 +388,18 @@ export class AudioGraph {
     if (this.onPlayStateChange) this.onPlayStateChange(false);
   }
 
-  stopAll() { 
+  flush() {
+    this.flushLive();
+    this.stopStaticFile();
+    this.isInputMuted = false;
+  }
+
+  isLivePlaying(): boolean {
+    return this.scheduledSources.size > 0;
+  }
+
+  stopAll() {
     this.flush();
-    this.stopInput(); 
+    this.stopInput();
   }
 }

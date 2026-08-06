@@ -1,6 +1,6 @@
 # ARCHITECTURE.md — System Architecture Anchor
 
-**Product:** رهنما (Rava / Rahnam)  
+**Product:** Rava (راوا)  
 **Document type:** Enduring system architecture reference  
 **Last architecture review:** 2026-08-04  
 **Scope note:** Existing product. Document organization rules, data flows, and verified modules. Do not redraw the entire repository tree.
@@ -9,7 +9,7 @@
 
 ## System Overview
 
-رهنما is a Vite-bundled React SPA that runs primarily as a mobile web client.
+Rava is a Vite-bundled React SPA that runs primarily as a mobile web client.
 
 **Runtime collaborators**
 1. **Browser UI** — React 19 tree rooted at `index.tsx` → `App.tsx` → `AuthGuard` → `Dashboard` (or auth/onboarding).
@@ -314,8 +314,8 @@ App
           └─ VisionOverlay
 ```
 
-Tabs (`AppTab`): `home` | `explore` | `wallet` | `tools` | `profile`  
-(`wallet` tab label in UI: «سفر من» / My Trip.)
+Tabs (`AppTab`): `home` | `explore` | `trip` | `tools` | `profile`  
+(`trip` tab label in UI: «سفر من» / My Trip. Legacy id `wallet` removed.)
 
 ---
 

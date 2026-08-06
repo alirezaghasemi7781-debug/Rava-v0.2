@@ -67,7 +67,7 @@ export const ProfileHeader: React.FC = () => {
           </h2>
           <div className="flex items-center justify-center gap-1.5 text-white/30">
             <ShieldCheck size={12} className="text-blue-500/50" />
-            <span className="text-[10px] font-bold font-mono">{user?.email}</span>
+            <span className="text-[10px] font-bold font-mono ltr-island" dir="ltr">{user?.email}</span>
           </div>
         </div>
 

@@ -1,0 +1,158 @@
+{
+  "at": "2026-08-06T05:26:37.021Z",
+  "email": "rava.smoke.1785993990835@mailinator.com",
+  "passed": 29,
+  "total": 30,
+  "results": [
+    {
+      "name": "Auth: create confirmed user (signup+verify path)",
+      "ok": true,
+      "detail": "user=d2286ac1-d462-4a8b-99dd-d7f16b05f128"
+    },
+    {
+      "name": "Auth: handle_new_user profile row",
+      "ok": true,
+      "detail": "balance=2 referral=0d4e66"
+    },
+    {
+      "name": "Auth: login with password",
+      "ok": true,
+      "detail": "session issued"
+    },
+    {
+      "name": "Auth: session recovery (get user)",
+      "ok": true,
+      "detail": "rava.smoke.1785993990835@mailinator.com"
+    },
+    {
+      "name": "Auth: password recovery request accepted",
+      "ok": false,
+      "detail": "status=429 {\"code\":429,\"error_code\":\"over_email_send_rate_limit\",\"msg\":\"email rate limit exceeded\"}"
+    },
+    {
+      "name": "RLS: profiles SELECT own-only",
+      "ok": true,
+      "detail": "rows=1"
+    },
+    {
+      "name": "Onboarding: profile update (city + semantic + completed)",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "Map data: get_city_attractions Istanbul ≥20",
+      "ok": true,
+      "detail": "count=31"
+    },
+    {
+      "name": "Map data: anon get_city_attractions Dubai ≥20",
+      "ok": true,
+      "detail": "count=28"
+    },
+    {
+      "name": "Map data: search_nearby_places returns rows",
+      "ok": true,
+      "detail": "count=20"
+    },
+    {
+      "name": "Favorites: insert own favorite",
+      "ok": true,
+      "detail": "1a4cd10f-57f8-43c1-8bc6-ae3206fc09df"
+    },
+    {
+      "name": "Trip: create user_trips",
+      "ok": true,
+      "detail": "b4875e44-d29c-495c-b811-bc50de652143"
+    },
+    {
+      "name": "Trip: start (status → active)",
+      "ok": true,
+      "detail": "active"
+    },
+    {
+      "name": "Trip: add itinerary activity",
+      "ok": true,
+      "detail": "1aba0dc4-fdc3-4c46-9c13-f3f1d3a78f99"
+    },
+    {
+      "name": "Trip: complete activity",
+      "ok": true,
+      "detail": "completed"
+    },
+    {
+      "name": "Wallet: deduct_fuel (60s)",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "Wallet: deduct_fuel idempotent retry",
+      "ok": true,
+      "detail": "no-op ok"
+    },
+    {
+      "name": "Wallet: process_poi_visit stamp + reward",
+      "ok": true,
+      "detail": "balance 1.9833333333333334→2.0833333333333335 xp=51 err=null"
+    },
+    {
+      "name": "Security: anon cannot deduct_fuel",
+      "ok": true,
+      "detail": "status=401"
+    },
+    {
+      "name": "Wallet: claim_reward profile_complete",
+      "ok": true,
+      "detail": "{\"ok\":true,\"xp\":100,\"fuel\":0.2,\"idempotent\":false,\"reward_type\":\"profile_complete\"}"
+    },
+    {
+      "name": "Gamification: record_daily_activity streak",
+      "ok": true,
+      "detail": "{\"current_streak\":1,\"last_active_date\":\"2026-08-06\"}"
+    },
+    {
+      "name": "Wallet: update_trip_budget expense",
+      "ok": true,
+      "detail": "{\"remaining\":48500000,\"over_budget\":false,\"total_budget\":50000000,\"daily_expenses\":0,\"estimated_cost\":20000000,\"recorded_expenses\":1500000}"
+    },
+    {
+      "name": "Trip: daily_recaps insert",
+      "ok": true,
+      "detail": "ok"
+    },
+    {
+      "name": "Passport: stamps + achievements readable",
+      "ok": true,
+      "detail": "stamps=1 achievements=7"
+    },
+    {
+      "name": "Wallet: zero-balance deduct clamps ≥0",
+      "ok": true,
+      "detail": "balance=0"
+    },
+    {
+      "name": "Edge: process-ticket deployed (not 404)",
+      "ok": true,
+      "detail": "status=500"
+    },
+    {
+      "name": "Edge: verify-price deployed (not 404)",
+      "ok": true,
+      "detail": "status=500"
+    },
+    {
+      "name": "Edge: the-dreamer deployed (not 404)",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "Trip: complete journey",
+      "ok": true,
+      "detail": "completed"
+    },
+    {
+      "name": "Cleanup: delete smoke user",
+      "ok": true,
+      "detail": "status=200"
+    }
+  ]
+}

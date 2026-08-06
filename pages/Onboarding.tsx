@@ -113,7 +113,7 @@ export const Onboarding: React.FC = () => {
       </div>
 
       <div className="pt-8 flex items-center justify-center gap-3 text-white/10 uppercase tracking-[0.4em] text-[7px] font-black pointer-events-none">
-        <Sparkles size={10} /> Neural Identity Logic
+        <Sparkles size={10} /> منطق هویت راوا
       </div>
     </div>
   );

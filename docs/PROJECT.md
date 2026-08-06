@@ -1,6 +1,6 @@
 # PROJECT.md — Project North Star
 
-**Product:** رهنما (Rava / Rahnam) — Smart Tour Guide  
+**Product:** Rava (راوا) — Smart Tour Guide  
 **Document type:** Enduring project-wide source of truth  
 **Last architecture review:** 2026-08-04
 
@@ -8,7 +8,7 @@
 
 ## Product Overview
 
-رهنما is a luxury, voice-first, map-centric mobile web tour guide for Persian-speaking travelers. It turns city exploration into a reliable phone-browser experience: curated attractions on a dark Google Map, hybrid POI details (first-party curated content plus Google Places), social footprints, passport-style stamps and wallet fuel, trip timeline tools, survival utilities (currency, flashcards, subway map), and a live Gemini voice agent grounded in map and profile context.
+Rava is a luxury, voice-first, map-centric mobile web tour guide for Persian-speaking travelers. It turns city exploration into a reliable phone-browser experience: curated attractions on a dark Google Map, hybrid POI details (first-party curated content plus Google Places), social footprints, passport-style stamps and wallet fuel, trip timeline tools, survival utilities (currency, flashcards, subway map), and a live Gemini voice agent grounded in map and profile context.
 
 The product is a single-page React client backed by Supabase (Auth, Postgres/PostGIS, Realtime, Storage, Edge Functions) and Google Maps / Places / Gemini. It is designed for imperfect mobile networks: IndexedDB place cache, offline outbox sync, and graceful empty/fallback paths when Google or Supabase are unavailable.
 

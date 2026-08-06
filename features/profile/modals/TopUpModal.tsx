@@ -40,11 +40,11 @@ export const TopUpModal: React.FC<TopUpModalProps> = ({ onClose }) => {
       const pkg = PACKAGES.find(p => p.id === selectedId);
       if (!pkg) return;
 
-      const { error } = await supabase.rpc('increment_my_wallet', {
+      const { error } = await supabase.rpc('increment_wallet', {
         px_transaction_id: crypto.randomUUID(),
         px_amount: pkg.mins / 60.0,
         px_xp_amount: pkg.mins * 2,
-        px_reward_type: 'topup'
+        px_reward_type: 'topup',
       });
 
       if (error) throw error;

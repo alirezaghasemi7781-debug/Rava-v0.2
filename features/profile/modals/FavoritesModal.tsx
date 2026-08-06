@@ -1,11 +1,10 @@
-
 import React from 'react';
-import { motion as _motion, AnimatePresence } from 'framer-motion';
-import { X, Heart, MapPin, Trash2, Sparkles } from 'lucide-react';
+import { motion as _motion } from 'framer-motion';
+import { X, Heart, MapPin, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../../components/core/GlassCard';
 import { useUserStore } from '../../../store/useUserStore';
 import { useUIStore } from '../../../store/useUIStore';
-import { useMapStore } from '../../../store/useMapStore';
+import { selectPOI } from '../../../services/poiSelectionService';
 import { AudioGraph } from '../../../services/audioGraph';
 
 const motion = _motion as any;
@@ -17,16 +16,26 @@ interface FavoritesModalProps {
 export const FavoritesModal: React.FC<FavoritesModalProps> = ({ onClose }) => {
   const { favorites, toggleFavorite } = useUserStore();
   const { setActiveTab } = useUIStore();
-  const { setActivePOI } = useMapStore();
 
-  const handleLocate = (fav: any) => {
+  const handleLocate = async (fav: (typeof favorites)[0]) => {
     AudioGraph.getInstance().playTickSound();
-    setActivePOI({ 
-      id: fav.placeId, 
-      name: fav.snapshot.name, 
-      category: fav.snapshot.category,
-      lat: 0, lng: 0 // در گام بعدی مختصات واقعی را از کش می‌گیرد
-    } as any);
+    const lat = fav.snapshot.lat;
+    const lng = fav.snapshot.lng;
+    await selectPOI(
+      {
+        id: fav.placeId,
+        name: fav.snapshot.name,
+        category: fav.snapshot.category,
+        image: fav.snapshot.image,
+        address: fav.snapshot.address,
+        lat: typeof lat === 'number' ? lat : 0,
+        lng: typeof lng === 'number' ? lng : 0,
+      },
+      {
+        source: 'favorite',
+        fetchEssentials: !(typeof lat === 'number' && typeof lng === 'number' && lat !== 0 && lng !== 0),
+      },
+    );
     setActiveTab('home');
     onClose();
   };
@@ -92,7 +101,7 @@ export const FavoritesModal: React.FC<FavoritesModalProps> = ({ onClose }) => {
 
           <div className="mt-8 pt-6 border-t border-white/5 text-center shrink-0">
              <p className="text-[9px] text-white/30 font-medium leading-relaxed">
-               این مکان‌ها در حافظه بلندمدت رهنما ثبت شده‌اند و در پیشنهادهای بعدی اولویت دارند.
+               این مکان‌ها در حافظه بلندمدت راوا ثبت شده‌اند و در پیشنهادهای بعدی اولویت دارند.
              </p>
           </div>
         </GlassCard>

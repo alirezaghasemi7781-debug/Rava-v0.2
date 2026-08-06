@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion as _motion } from 'framer-motion';
-import { X, Settings, Database, Trash2, Globe, Check, Loader2 } from 'lucide-react';
+import { X, Settings, Database, Trash2, Globe, Check, Loader2, Languages } from 'lucide-react';
 import { GlassCard } from '../../../components/core/GlassCard';
 import { useSurvivalStore } from '../../../store/useSurvivalStore';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { AudioGraph } from '../../../services/audioGraph';
 
 const motion = _motion as any;
@@ -14,11 +14,12 @@ interface SystemSettingsModalProps {
 
 export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ onClose }) => {
   const { activeCurrency, setActiveCurrency } = useSurvivalStore();
+  const { semanticProfile, updatePreference } = useAuthStore();
   const [cacheSize, setCacheSize] = useState<string>('...');
   const [clearing, setClearing] = useState(false);
+  const language = semanticProfile.language || 'fa';
 
   useEffect(() => {
-    // تخمین حجم دیتای IndexedDB
     if ('storage' in navigator && 'estimate' in navigator.storage) {
       navigator.storage.estimate().then(estimate => {
         const sizeMB = (estimate.usage || 0) / (1024 * 1024);
@@ -31,11 +32,9 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ onClos
     setClearing(true);
     AudioGraph.haptic([50, 100, 50]);
     
-    // پاکسازی کش مرورگر و IndexedDB
     try {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      // در نسخه واقعی می‌توان دیتابیس IndexedDB را هم ریست کرد
       setTimeout(() => {
         setCacheSize('0.0 MB');
         setClearing(false);
@@ -49,6 +48,11 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ onClos
     { id: 'IRT', label: 'تومان (ایران)', desc: 'نمایش تمام قیمت‌ها به واحد وطن' },
     { id: 'TRY', label: 'لیر (ترکیه)', desc: 'مناسب برای مسافران استانبول' },
     { id: 'AED', label: 'درهم (امارات)', desc: 'مناسب برای مسافران دبی' },
+  ];
+
+  const languages: { id: 'fa' | 'en'; label: string; desc: string }[] = [
+    { id: 'fa', label: 'فارسی', desc: 'رابط و پاسخ‌های پیش‌فرض فارسی' },
+    { id: 'en', label: 'English', desc: 'Prefer English UI cues where available' },
   ];
 
   return (
@@ -67,8 +71,32 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ onClos
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em]">Core System Control</p>
           </div>
 
-          <div className="space-y-10 text-right">
-            {/* واحد پول */}
+          <div className="space-y-10 text-right max-h-[60vh] overflow-y-auto no-scrollbar">
+            <div className="space-y-4">
+               <div className="flex items-center justify-between px-2">
+                  <Languages size={14} className="text-yellow-500" />
+                  <h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest">زبان ترجیحی</h4>
+               </div>
+               <div className="space-y-2">
+                 {languages.map(lang => (
+                   <button 
+                     key={lang.id}
+                     onClick={() => {
+                       updatePreference('language', lang.id);
+                       AudioGraph.getInstance().playTickSound();
+                     }}
+                     className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${language === lang.id ? 'bg-yellow-500/10 border-yellow-500/40 text-white' : 'bg-white/[0.02] border-white/5 text-white/40'}`}
+                   >
+                     {language === lang.id ? <Check size={18} className="text-yellow-500" /> : <div className="w-4" />}
+                     <div className="text-right">
+                        <span className="text-xs font-black block">{lang.label}</span>
+                        <span className="text-[8px] font-bold opacity-60">{lang.desc}</span>
+                     </div>
+                   </button>
+                 ))}
+               </div>
+            </div>
+
             <div className="space-y-4">
                <div className="flex items-center justify-between px-2">
                   <Globe size={14} className="text-indigo-400" />
@@ -90,7 +118,6 @@ export const SystemSettingsModal: React.FC<SystemSettingsModalProps> = ({ onClos
                </div>
             </div>
 
-            {/* مدیریت حافظه */}
             <div className="space-y-4">
                <div className="flex items-center justify-between px-2">
                   <Database size={14} className="text-red-400" />

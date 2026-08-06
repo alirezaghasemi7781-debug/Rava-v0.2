@@ -105,7 +105,7 @@ export const StampCelebration: React.FC<StampCelebrationProps> = ({ placeName, o
             className="bg-blue-100 px-6 py-3 rounded-2xl flex items-center gap-2 border border-blue-200"
           >
              <Star size={20} className="text-blue-600" />
-             <span className="text-blue-700 font-black text-sm">+۵۰ امتیاز XP</span>
+             <span className="text-blue-700 font-black text-sm">+۵۰ امتیاز</span>
           </motion.div>
         </div>
 
@@ -114,7 +114,7 @@ export const StampCelebration: React.FC<StampCelebrationProps> = ({ placeName, o
           transition={{ duration: 2, repeat: Infinity }}
           className="text-amber-900/20 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em]"
         >
-          <Sparkles size={14} /> Islamic Republic of Rahnam
+          <Sparkles size={14} /> پاسپورت راوا
         </motion.div>
       </motion.div>
 

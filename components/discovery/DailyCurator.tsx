@@ -8,6 +8,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { extractJSON } from '../../utils/jsonParser';
 import { TripEvent } from '../../types';
 import { GeoPoint } from '../../utils/geoPoint';
+import { APP_CONFIG } from '../../config';
 
 const motion = _motion as any;
 
@@ -33,12 +34,12 @@ export const DailyCurator: React.FC = () => {
     const geo = GeoPoint.fromArray(userLocation);
     const locString = geo ? `${geo.lat},${geo.lng}` : "Unknown Location";
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: APP_CONFIG.GOOGLE.GEMINI_API_KEY });
     
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `به عنوان رهنما، برای امروز من در ${cityMode} یک برنامه سفر باحال بچین.
+        contents: `به عنوان راوا، برای امروز من در ${cityMode} یک برنامه سفر باحال بچین.
         موقعیت فعلی من: ${locString}
         برنامه شامل: صبح، ناهار، عصر و شب.
         خروجی فقط و فقط JSON باشد.`,
@@ -87,9 +88,10 @@ export const DailyCurator: React.FC = () => {
           title: value,
           time: times[key],
           date: new Date().toISOString().split('T')[0],
-          status: 'upcoming',
+          status: 'pending',
+          sequence: Object.keys(times).indexOf(key),
           coordinates: geo?.toArray(),
-          details: { notes: 'پیشنهاد هوشمند رهنما' }
+          details: { notes: 'پیشنهاد هوشمند راوا' }
         };
         return addTripEvent(event);
       });
@@ -115,7 +117,7 @@ export const DailyCurator: React.FC = () => {
       {!plan ? (
         <div className="relative z-10 space-y-4">
           <p className="text-white/60 text-sm leading-relaxed text-right">
-             رفیق هنوز برنامه‌ای نداری؟ رهنما با هوش مصنوعی‌ش برات یه مسیر خفن می‌چینه که نه خسته شی، نه جای باحالی رو از دست بدی.
+             رفیق هنوز برنامه‌ای نداری؟ راوا با هوش مصنوعی‌ش برات یه مسیر خفن می‌چینه که نه خسته شی، نه جای باحالی رو از دست بدی.
           </p>
           <button 
             onClick={generatePlan} disabled={isPlanning}

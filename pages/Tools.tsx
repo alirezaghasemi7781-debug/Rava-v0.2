@@ -38,7 +38,7 @@ export const Tools: React.FC = () => {
                <Phone size={24} />
             </div>
             <div className="text-right">
-              <h4 className="text-red-500 font-black text-lg">پشتیبانی فوری رهنما</h4>
+              <h4 className="text-red-500 font-black text-lg">پشتیبانی فوری راوا</h4>
               <span className="text-red-500/40 text-[10px] font-bold uppercase">24/7 Priority Line</span>
             </div>
           </div>

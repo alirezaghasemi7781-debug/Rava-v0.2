@@ -1,12 +1,15 @@
 {
-  "name": "+-docks-2.73-rahnam---smart-tour-guide-co-start",
+  "name": "rava",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fetch:places": "node scripts/fetch_places.mjs",
+    "db:migrate": "node scripts/apply_migrations.mjs",
+    "smoke": "node scripts/smoke_test.mjs"
   },
   "dependencies": {
     "react": "^19.2.3",

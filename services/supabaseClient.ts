@@ -3,9 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@^2.48.1';
 import { APP_CONFIG } from '../config';
 
 /**
- * کلاینت سوپابیس رهنما
+ * کلاینت سوپابیس راوا
  * متصل به تنظیمات مرکزی (APP_CONFIG) که از متغیرهای محیطی Vite تغذیه می‌کند.
- * این روش امنیت و قابلیت اطمینان را در محیط پروداکشن افزایش می‌دهد.
+ * فقط ANON KEY — بدون service role در فرانت‌اند.
  */
 
 export const supabase = createClient(

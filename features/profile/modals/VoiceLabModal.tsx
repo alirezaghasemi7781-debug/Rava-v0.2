@@ -43,7 +43,7 @@ export const VoiceLabModal: React.FC<VoiceLabModalProps> = ({ onClose }) => {
               <Headphones size={32} />
             </div>
             <h3 className="text-2xl font-black text-white">لابراتوار حنجره</h3>
-            <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Neural Voice Tuning</p>
+            <p className="text-white/30 text-[10px] font-bold tracking-widest">تنظیم صدای راوا</p>
           </div>
 
           <div className="space-y-6 text-right">

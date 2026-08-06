@@ -37,7 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ defaultTab }) => {
   const overlayContent = useMemo(() => {
     switch(activeTab) {
       case 'explore': return <Explore />;
-      case 'wallet': return <MyTrip />;
+      case 'trip': return <MyTrip />;
       case 'tools': return <Tools />;
       case 'profile': return <Profile />;
       default: return null;

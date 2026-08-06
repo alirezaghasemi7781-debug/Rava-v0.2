@@ -107,7 +107,7 @@ export const VisionOverlay: React.FC = () => {
           <div className="absolute bottom-16 left-0 right-0 flex flex-col items-center gap-8">
             <div className="glass px-6 py-3 rounded-full flex items-center gap-3 border-yellow-500/20">
               <Loader2 size={16} className="text-yellow-500 animate-spin" />
-              <span className="text-white font-bold text-xs">رهنما داره محیط رو اسکن میکنه...</span>
+              <span className="text-white font-bold text-xs">راوا داره محیط رو اسکن میکنه...</span>
             </div>
 
             <button 
@@ -124,7 +124,7 @@ export const VisionOverlay: React.FC = () => {
                 <span className="text-white/60 text-[10px] font-black uppercase">Live Vision Session</span>
              </div>
              <div className="text-right">
-                <h2 className="text-white font-black text-xl mb-1">چشم هوشمند رهنما</h2>
+                <h2 className="text-white font-black text-xl mb-1">چشم هوشمند راوا</h2>
                 <p className="text-white/40 text-xs font-medium">دوربین رو بگیر سمت هر چیزی تا برات توضیح بدم</p>
              </div>
           </div>

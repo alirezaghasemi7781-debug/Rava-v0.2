@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { MapState, POI, Footprint } from '../types';
 
@@ -7,55 +6,61 @@ export const useMapStore = create<MapState>((set) => ({
   activePOI: null,
   fullDetailPOI: null,
   nearbyFootprints: [],
-  pendingFootprints: [], // اضافه شد طبق برنامه فاز ۲
+  pendingFootprints: [],
   isLoadingDetails: false,
   isCelebratingStamp: false,
   isNarrativePlaying: false,
+  poiError: null,
+  locationPermissionDenied: false,
+  mapsLoadError: null,
 
-  setUserLocation: (loc: [number, number]) => set({ userLocation: loc }),
+  setUserLocation: (loc: [number, number]) =>
+    set({ userLocation: loc, locationPermissionDenied: false }),
   
-  // اتمیک کردن تغییر مکان: همزمان با تغییر POI، وضعیت‌های وابسته را ریست می‌کند
   setActivePOI: (poi: POI | null) => set((state) => ({
     activePOI: poi,
     fullDetailPOI: poi !== null ? null : state.fullDetailPOI,
     isNarrativePlaying: false,
     isLoadingDetails: false,
-    // ردپاهای موقت (Pending) با تغییر مکان پاک می‌شوند
+    poiError: poi !== null ? null : state.poiError,
     pendingFootprints: poi !== null ? [] : state.pendingFootprints,
   })),
 
-  // اکشن جدید برای پاکسازی کامل
   clearActivePOI: () => set({
     activePOI: null,
     fullDetailPOI: null,
     isNarrativePlaying: false,
     isLoadingDetails: false,
+    poiError: null,
     pendingFootprints: [],
   }),
 
-  setFullDetailPOI: (poi: POI | null) => set({ fullDetailPOI: poi }),
+  setFullDetailPOI: (poi: POI | null) => set({ fullDetailPOI: poi, poiError: null }),
   setNearbyFootprints: (footprints: Footprint[]) => set({ nearbyFootprints: footprints }),
   setLoadingDetails: (val: boolean) => set({ isLoadingDetails: val }),
   setCelebratingStamp: (val: boolean) => set({ isCelebratingStamp: val }),
   setNarrativePlaying: (val: boolean) => set({ isNarrativePlaying: val }),
+  setPOIError: (msg: string | null) => set({ poiError: msg }),
+  setLocationPermissionDenied: (val: boolean) => set({ locationPermissionDenied: val }),
+  setMapsLoadError: (msg: string | null) => set({ mapsLoadError: msg }),
   
-  // تغییر نام متد (منطق اصلاح شده: استفاده از pendingFootprints)
   addFootprintOptimistic: (poiId: string, footprint: Footprint) => set((state) => {
-    if (!state.activePOI || state.activePOI.id !== poiId) return {};
+    const matchesActive = state.activePOI?.id === poiId;
+    const matchesFull = state.fullDetailPOI?.id === poiId;
+    if (!matchesActive && !matchesFull) return {};
 
     const pendingFootprint: Footprint = { ...footprint, is_verified: false };
 
-    const updatedFullDetailPOI = (state.fullDetailPOI && state.fullDetailPOI.id === poiId)
+    const updatedFullDetailPOI = matchesFull
       ? {
-          ...state.fullDetailPOI,
-          footprints: [pendingFootprint, ...(state.fullDetailPOI.footprints || [])]
+          ...state.fullDetailPOI!,
+          footprints: [pendingFootprint, ...(state.fullDetailPOI!.footprints || [])],
         }
       : state.fullDetailPOI;
 
     return {
       fullDetailPOI: updatedFullDetailPOI,
-      // اینجا به جای nearbyFootprints، به pendingFootprints اضافه می‌شود
-      pendingFootprints: [pendingFootprint, ...state.pendingFootprints]
+      pendingFootprints: [pendingFootprint, ...state.pendingFootprints],
     };
   }),
 }));

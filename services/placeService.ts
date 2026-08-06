@@ -254,7 +254,7 @@ class PlaceServiceProvider {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-1.5-flash',
-        contents: `تحلیلگر Vibe مکان (رهنما): این نظرات را بخوان و اتمسفر مکان را در یک پاراگراف کوتاه (حداکثر ۲ جمله) به زبان فارسی صمیمی خلاصه کن:\n\n${reviewText}`,
+        contents: `تحلیلگر Vibe مکان (راوا): این نظرات را بخوان و اتمسفر مکان را در یک پاراگراف کوتاه (حداکثر ۲ جمله) به زبان فارسی صمیمی خلاصه کن:\n\n${reviewText}`,
         config: { temperature: 0.7 }
       });
       return response.text || "جای باحالی به نظر میاد!";

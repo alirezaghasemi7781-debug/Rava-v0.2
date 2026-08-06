@@ -9,6 +9,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { extractJSON } from '../../utils/jsonParser';
 import { formatAsToman } from '../../utils/helpers';
 import { AudioGraph } from '../../services/audioGraph';
+import { APP_CONFIG } from '../../config';
 
 const motion = _motion as any;
 
@@ -35,7 +36,7 @@ export const BargainCalculator: React.FC = () => {
     setVerdict(null);
     AudioGraph.getInstance().playTickSound();
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: APP_CONFIG.GOOGLE.GEMINI_API_KEY });
     
     // کانتکست Vibe کاربر: اگر کاربر لاکچری باشد، سخت‌گیری کمتر است
     const userVibe = semanticProfile.travel_style || 'normal';
@@ -43,7 +44,7 @@ export const BargainCalculator: React.FC = () => {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `به عنوان "رهنما" (دستیار توریست ایرانی)، این قیمت رو کارشناسی کن:
+        contents: `به عنوان "راوا" (دستیار توریست ایرانی)، این قیمت رو کارشناسی کن:
         آیتم: ${item}
         قیمت اعلامی فروشنده: ${price} ${currencyLabel}
         شهر: ${cityMode}
@@ -138,7 +139,7 @@ export const BargainCalculator: React.FC = () => {
             <div className="flex items-center justify-between flex-row-reverse">
               <div className="flex items-center gap-2">
                 {verdict.status === 'good' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
-                <span className="font-black">نظر رهنما</span>
+                <span className="font-black">نظر راوا</span>
               </div>
               <div className="flex items-center gap-2 bg-black/20 px-3 py-1 rounded-full text-[10px] font-black uppercase">
                  <TrendingDown size={14} /> Fair: {verdict.fair_price} {currencyLabel}

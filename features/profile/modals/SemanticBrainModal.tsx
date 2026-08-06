@@ -30,7 +30,7 @@ export const SemanticBrainModal: React.FC<SemanticBrainModalProps> = ({ onClose 
             <div className="w-16 h-16 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-600/30">
               <Sparkles size={32} />
             </div>
-            <h3 className="text-2xl font-black text-white">مغزِ رهنما</h3>
+            <h3 className="text-2xl font-black text-white">مغزِ راوا</h3>
             <p className="text-white/30 text-[10px] font-bold uppercase tracking-[0.3em]">AI Semantic Context Viewer</p>
           </div>
 
@@ -38,7 +38,7 @@ export const SemanticBrainModal: React.FC<SemanticBrainModalProps> = ({ onClose 
             <div className="bg-indigo-500/5 border border-indigo-500/10 p-5 rounded-3xl flex items-start gap-4">
                <Info size={20} className="text-indigo-400 shrink-0" />
                <p className="text-[10px] text-white/50 leading-relaxed font-bold">
-                 رفیق، اینجا تگ‌هایی که رهنما در طول مکالمات در مورد شخصیت تو یاد گرفته رو می‌بینی. اگه رهنما در موردت اشتباه فکر می‌کنه، تگ غلط رو پاک کن تا رفتارش فوراً اصلاح بشه.
+                 رفیق، اینجا تگ‌هایی که راوا در طول مکالمات در مورد شخصیت تو یاد گرفته رو می‌بینی. اگه راوا در موردت اشتباه فکر می‌کنه، تگ غلط رو پاک کن تا رفتارش فوراً اصلاح بشه.
                </p>
             </div>
 

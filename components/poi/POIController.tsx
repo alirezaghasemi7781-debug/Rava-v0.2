@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion as _motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { useUIStore } from '../../store/useUIStore';
 import { useMapStore } from '../../store/useMapStore';
 import { useUserStore } from '../../store/useUserStore';
+import { useRouteStore } from '../../store/useRouteStore';
 import { PlaceService } from '../../services/placeService';
 import { AudioGraph } from '../../services/audioGraph';
 import { PriceWatchModal } from '../social/PriceWatchModal';
@@ -11,14 +11,17 @@ import { StampCelebration } from '../social/StampCelebration';
 import { POIMissionAction } from './POIMissionAction';
 import { isWithinRadius } from '../../utils/geoUtils';
 import { GeoPoint } from '../../utils/geoPoint';
+import { formatJalaliShort } from '../../utils/jalali';
 import { 
   X, Sparkles, MapPin, Tag, 
   Loader2, AudioWaveform as Waveform,
-  Clock, Zap, Play, Square, BookOpen
+  Clock, Zap, Play, Square, BookOpen,
+  Heart, Navigation, CalendarPlus, AlertCircle, RefreshCw
 } from 'lucide-react';
 
 import { POIHeader } from './POIHeader';
 import { POIFootprintSection } from './POIFootprintSection';
+import type { TripEvent } from '../../types';
 
 const motion = _motion as any;
 
@@ -28,7 +31,7 @@ const Category3DIcon = ({ category, size = "text-5xl" }: { category: string, siz
   if (c.includes('cafe') || c.includes('coffee')) return <span className={`${size} drop-shadow-2xl`}>☕</span>;
   if (c.includes('shopping') || c.includes('store') || c.includes('mall')) return <span className={`${size} drop-shadow-2xl`}>🛍️</span>;
   if (c.includes('park') || c.includes('nature')) return <span className={`${size} drop-shadow-2xl`}>🌳</span>;
-  if (c.includes('museum') || c.includes('historical') || c.includes('church') || c.includes('mosque')) return <span className={`${size} drop-shadow-2xl`}>🕌</span>;
+  if (c.includes('museum') || c.includes('historical') || c.includes('church') || c.includes('mosque') || c.includes('attraction')) return <span className={`${size} drop-shadow-2xl`}>🕌</span>;
   return <span className={`${size} drop-shadow-2xl`}>📍</span>;
 };
 
@@ -45,22 +48,28 @@ export const POIController: React.FC = () => {
     activePOI, setActivePOI, 
     fullDetailPOI, setFullDetailPOI,
     isLoadingDetails, setLoadingDetails,
-    addFootprintOptimistic, // استفاده از متد جدید
+    addFootprintOptimistic,
     userLocation,
     isCelebratingStamp, setCelebratingStamp,
     isNarrativePlaying, setNarrativePlaying,
-    clearActivePOI // استفاده از اکشن جدید برای خروج کامل
+    clearActivePOI,
+    poiError, setPOIError,
   } = useMapStore();
   
-  const { addStamp, wallet, isStamping } = useUserStore();
+  const { addStamp, wallet, isStamping, favorites, toggleFavorite, addTripEvent } = useUserStore();
+  const { startRoute, isActive: routeActive } = useRouteStore();
   const audioGraph = AudioGraph.getInstance();
 
   const [vibeCheck, setVibeCheck] = useState<string | null>(null);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPriceWatch, setShowPriceWatch] = useState(false);
+  const [itineraryAdded, setItineraryAdded] = useState(false);
 
   const activeRequestIdRef = useRef<string | null>(null);
+
+  const displayPOI = fullDetailPOI || activePOI;
+  const isFavorite = displayPOI ? favorites.some((f) => f.placeId === displayPOI.id) : false;
 
   useEffect(() => {
     audioGraph.onNarrativeStop = () => {
@@ -71,24 +80,27 @@ export const POIController: React.FC = () => {
     };
   }, [setNarrativePlaying]);
 
-  // اصلاح شده: مدیریت مموری لیک برای صدای راوی
   useEffect(() => {
     if (!fullDetailPOI?.narrative?.audio_url) return;
     
     const controller = new AbortController();
     fetch(fullDetailPOI.narrative.audio_url, { signal: controller.signal })
       .then(() => console.log('[POI] Narrative audio cached successfully'))
-      .catch(() => {}); // هندل کردن خطای Abort به صورت سایلنت
+      .catch(() => {});
       
-    return () => controller.abort(); // کنسل کردن فچ هنگام تغییر POI
+    return () => controller.abort();
   }, [fullDetailPOI?.narrative?.audio_url]);
 
-  // اصلاح شده: Safety net برای تایمر جشن
   useEffect(() => {
     if (!isCelebratingStamp) return;
     const safetyId = setTimeout(() => setCelebratingStamp(false), 5000);
     return () => clearTimeout(safetyId);
   }, [isCelebratingStamp, setCelebratingStamp]);
+
+  useEffect(() => {
+    setItineraryAdded(false);
+    setVibeCheck(null);
+  }, [activePOI?.id, fullDetailPOI?.id]);
 
   const attemptStamping = useCallback(async (poiId: string, poiName: string, poiLat: number, poiLng: number) => {
     const geo = GeoPoint.fromArray(userLocation);
@@ -103,7 +115,7 @@ export const POIController: React.FC = () => {
           id: Math.random().toString(), 
           placeId: poiId,
           placeName: poiName,
-          date: new Date().toLocaleDateString('fa-IR')
+          date: formatJalaliShort(new Date()),
         });
         setCelebratingStamp(true);
       } catch (err) {
@@ -116,38 +128,39 @@ export const POIController: React.FC = () => {
     if (!activePOI) return;
     
     const requestId = activePOI.id;
-    const poiSnapshot = { ...activePOI }; // کپی برای استفاده بعد از await
+    const poiSnapshot = { ...activePOI };
 
     activeRequestIdRef.current = requestId;
     setLoadingDetails(true);
+    setPOIError(null);
     
     try {
-      // اصلاح شده: استفاده از Promise.all برای موازی‌سازی و سرعت بیشتر
       const [curatedInfo, googleInfo] = await Promise.all([
-        PlaceService.fetchHybridDetails(requestId),
-        PlaceService.fetchFullDetails(requestId)
+        PlaceService.fetchHybridDetails(requestId).catch(() => ({})),
+        requestId.startsWith('rava_syn_')
+          ? Promise.resolve({})
+          : PlaceService.fetchFullDetails(requestId).catch(() => ({})),
       ]);
 
-      // گارد امنیتی: اگر کاربر روی مکان دیگری کلیک کرده، ادامه نده
       if (activeRequestIdRef.current !== requestId) return;
 
       const updatedPOI = { ...poiSnapshot, ...curatedInfo, ...googleInfo };
       
-      // الگوی رفع Layout Conflict: اول استیت قبلی پاک شود
       setActivePOI(null);
       setFullDetailPOI(updatedPOI);
       
-      if (curatedInfo.is_curated) {
-        setVibeCheck(curatedInfo.description || null);
+      if ((curatedInfo as any).is_curated) {
+        setVibeCheck((curatedInfo as any).description || null);
       } else {
         const vibe = await PlaceService.getAIVibeCheck(updatedPOI.reviews || []);
-        if (activeRequestIdRef.current !== requestId) return; // چک مجدد بعد از await دوم
+        if (activeRequestIdRef.current !== requestId) return;
         setVibeCheck(vibe);
       }
       
       attemptStamping(poiSnapshot.id, poiSnapshot.name, poiSnapshot.lat, poiSnapshot.lng);
     } catch (e) {
       console.error("[POI] Expand Error:", e);
+      setPOIError('نتونستیم جزئیات رو کامل کنیم. دوباره تلاش کن.');
       activeRequestIdRef.current = null;
     } finally {
       if (activeRequestIdRef.current === requestId) {
@@ -173,8 +186,6 @@ export const POIController: React.FC = () => {
     if (!comment.trim() || !fullDetailPOI) return;
     setIsSubmitting(true);
     
-    // شبیه‌سازی ارسال (در فازهای بعدی به سرور متصل می‌شود)
-    // فعلاً از addFootprintOptimistic استفاده می‌کنیم
     setTimeout(() => {
       addFootprintOptimistic(fullDetailPOI.id, {
         id: Math.random().toString(),
@@ -187,6 +198,48 @@ export const POIController: React.FC = () => {
       setIsSubmitting(false);
     }, 800);
   };
+
+  const handleFavorite = async () => {
+    const poi = fullDetailPOI || activePOI;
+    if (!poi) return;
+    await toggleFavorite(poi);
+    AudioGraph.haptic(10);
+  };
+
+  const handleAddItinerary = async () => {
+    const poi = fullDetailPOI || activePOI;
+    if (!poi) return;
+    const event: TripEvent = {
+      id: crypto.randomUUID(),
+      type: 'activity',
+      title: poi.name,
+      time: '14:00',
+      date: new Date().toISOString().slice(0, 10),
+      status: 'pending',
+      sequence: 0,
+      placeId: poi.id,
+      placeName: poi.name,
+      coordinates: [poi.lat, poi.lng],
+      details: {},
+    };
+    await addTripEvent(event);
+    setItineraryAdded(true);
+    AudioGraph.getInstance().playTickSound();
+  };
+
+  const handleStartNav = async () => {
+    const poi = fullDetailPOI || activePOI;
+    if (!poi) return;
+    await startRoute(poi, 'walking');
+    AudioGraph.getInstance().playTickSound();
+  };
+
+  const nearbyForStamp = (() => {
+    const poi = fullDetailPOI || activePOI;
+    const geo = GeoPoint.fromArray(userLocation);
+    if (!poi || !geo || (poi.lat === 0 && poi.lng === 0)) return false;
+    return isWithinRadius(geo.lat, geo.lng, poi.lat, poi.lng, 150);
+  })();
 
   return (
     <LayoutGroup>
@@ -203,8 +256,7 @@ export const POIController: React.FC = () => {
               <div className="absolute -top-4 -right-4 opacity-5 blur-sm transform rotate-12 pointer-events-none">
                 <Category3DIcon category={activePOI.category} size="text-9xl" />
               </div>
-              <div className="flex items-start justify-between mb-8">
-                {/* دکمه بستن با استفاده از clearActivePOI برای تمیزی کامل */}
+              <div className="flex items-start justify-between mb-6">
                 <button onClick={() => { activeRequestIdRef.current = null; clearActivePOI(); }} className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-white/40 hover:text-white transition-all active:scale-90">
                   <X size={24} />
                 </button>
@@ -223,8 +275,35 @@ export const POIController: React.FC = () => {
                    )}
                 </motion.div>
               </div>
+
+              {/* Quick actions on collapsed sheet */}
+              <div className="flex gap-3 mb-6">
+                <button onClick={handleFavorite} className={`flex-1 glass py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-black ${isFavorite ? 'text-red-400 border-red-500/30' : 'text-white/50'}`}>
+                  <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />
+                  علاقه
+                </button>
+                <button onClick={handleStartNav} className="flex-1 glass py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-black text-yellow-400 border-yellow-500/20">
+                  <Navigation size={16} />
+                  مسیر
+                </button>
+                <button onClick={handleAddItinerary} className="flex-1 glass py-3 rounded-2xl flex items-center justify-center gap-2 text-xs font-black text-white/50">
+                  <CalendarPlus size={16} />
+                  {itineraryAdded ? 'اضافه شد' : 'برنامه'}
+                </button>
+              </div>
+
+              {poiError && (
+                <div className="mb-4 glass border-red-500/30 bg-red-500/10 p-4 rounded-2xl flex items-center gap-3 text-right">
+                  <AlertCircle size={18} className="text-red-400 shrink-0" />
+                  <p className="text-red-200 text-xs font-bold flex-1">{poiError}</p>
+                  <button onClick={handleExpand} className="text-red-300 p-2">
+                    <RefreshCw size={16} />
+                  </button>
+                </div>
+              )}
+
               <div className="text-center relative z-10">
-                <button onClick={handleExpand} disabled={isLoadingDetails} className="w-full bg-yellow-500 py-6 rounded-[2.2rem] text-black font-black text-xl shadow-[0_20px_50px_rgba(234,179,8,0.3)] flex items-center justify-center gap-4 active:scale-[0.97] transition-all">
+                <button onClick={handleExpand} disabled={isLoadingDetails} className="w-full bg-yellow-500 py-6 rounded-[2.2rem] text-black font-black text-xl shadow-[0_20px_50px_rgba(234,179,8,0.3)] flex items-center justify-center gap-4 active:scale-[0.97] transition-all disabled:opacity-70">
                   {isLoadingDetails ? <Loader2 size={28} className="animate-spin" /> : <><span className="mt-1">تحلیل هوشمند و جزئیات 👀</span><Sparkles size={24} /></>}
                 </button>
               </div>
@@ -241,7 +320,7 @@ export const POIController: React.FC = () => {
               layoutId={`card-${fullDetailPOI.id}`}
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 40, stiffness: 300 }}
-              className="relative w-full h-[95vh] bg-[#050505] rounded-t-[5rem] border-t border-white/10 overflow-y-auto no-scrollbar shadow-[0_-50px_100px_rgba(0,0,0,1)]"
+              className="relative w-full h-[95vh] bg-[#050505] rounded-t-[5rem] border-t border-white/10 overflow-y-auto no-scrollbar shadow-[0_-50px_100px_rgba(0,0,0,1)] pb-safe"
             >
               <POIHeader 
                 id={fullDetailPOI.id}
@@ -252,7 +331,38 @@ export const POIController: React.FC = () => {
                 onBack={() => setFullDetailPOI(null)}
               />
 
-              <div className="px-12 pt-10 pb-44 space-y-16">
+              <div className="px-12 pt-10 pb-44 space-y-10">
+                {/* Primary CTAs */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleStartNav}
+                    className={`flex-[2] py-5 rounded-[2rem] font-black text-lg flex items-center justify-center gap-3 ${
+                      routeActive ? 'bg-white text-black' : 'bg-yellow-500 text-black shadow-xl shadow-yellow-500/20'
+                    }`}
+                  >
+                    <Navigation size={22} />
+                    {routeActive ? 'مسیر فعال است' : 'شروع مسیریابی'}
+                  </button>
+                  <button
+                    onClick={handleFavorite}
+                    className={`flex-1 glass py-5 rounded-[2rem] flex items-center justify-center ${isFavorite ? 'text-red-400 border-red-500/40' : 'text-white/50'}`}
+                  >
+                    <Heart size={24} fill={isFavorite ? 'currentColor' : 'none'} />
+                  </button>
+                  <button
+                    onClick={handleAddItinerary}
+                    className="flex-1 glass py-5 rounded-[2rem] flex items-center justify-center text-white/60"
+                  >
+                    <CalendarPlus size={24} />
+                  </button>
+                </div>
+
+                {nearbyForStamp && (
+                  <div className="glass border-yellow-500/30 bg-yellow-500/10 p-5 rounded-[2rem] text-center">
+                    <p className="text-yellow-400 text-sm font-black">نزدیکی! مهر پاسپورت آماده ثبت است ✨</p>
+                  </div>
+                )}
+
                 {fullDetailPOI.narrative && (
                   <motion.div 
                     initial={{ opacity: 0, scale: 0.9 }} 
@@ -325,7 +435,7 @@ export const POIController: React.FC = () => {
                   </div>
                   <div className="glass p-10 pt-12 rounded-[4rem] border-indigo-500/30 bg-indigo-600/5 transition-all group-hover:bg-indigo-600/10">
                     <p className="text-white font-medium text-right leading-[1.8] text-2xl italic tracking-tight">
-                      {vibeCheck ? `"${vibeCheck}"` : "تحلیلگر رهنما در حال بررسی اتمسفر اینجاست..."}
+                      {vibeCheck ? `"${vibeCheck}"` : "تحلیلگر راوا در حال بررسی اتمسفر اینجاست..."}
                     </p>
                   </div>
                 </div>

@@ -1,11 +1,11 @@
 
 import { create } from 'zustand';
-import { UIState, AppTab } from '../types';
+import { UIState, AppTab, PendingToolConfirm } from '../types';
 
 interface ExtendedUIState extends UIState {
   isInterrupting: boolean;
   isUserTalking: boolean;
-  isPlayingNarrative: boolean; // استیت جدید برای فاز ۲
+  isPlayingNarrative: boolean;
   
   setInterrupting: (val: boolean) => void;
   setUserTalking: (val: boolean) => void;
@@ -20,11 +20,12 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   isConnecting: false,
   isInterrupting: false,
   isUserTalking: false,
-  isPlayingNarrative: false, // مقدار اولیه
+  isPlayingNarrative: false,
   showTranscript: false,
   showVision: false,
   captions: { user: '', ai: '' },
   rewardNotify: null,
+  pendingToolConfirm: null,
 
   setActiveTab: (tab: AppTab) => set({ activeTab: tab }),
   setRecording: (val: boolean) => set({ isRecording: val }),
@@ -38,4 +39,5 @@ export const useUIStore = create<ExtendedUIState>((set) => ({
   setShowVision: (val: boolean) => set({ showVision: val }),
   setCaptions: (captions) => set({ captions }),
   setRewardNotify: (val) => set({ rewardNotify: val }),
+  setPendingToolConfirm: (val: PendingToolConfirm | null) => set({ pendingToolConfirm: val }),
 }));

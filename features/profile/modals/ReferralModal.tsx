@@ -30,8 +30,8 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'دعوت‌نامه اختصاصی رهنما',
-          text: `رفیق، با این کد دعوت وارد اپلیکیشن رهنما شو تا هر دومون ۳۰ دقیقه شارژ هوش مصنوعی هدیه بگیریم! کد من: ${wallet.referralCode}`,
+          title: 'دعوت‌نامه اختصاصی راوا',
+          text: `رفیق، با این کد دعوت وارد اپلیکیشن راوا شو تا هر دومون ۳۰ دقیقه شارژ هوش مصنوعی هدیه بگیریم! کد من: ${wallet.referralCode}`,
           url: window.location.origin
         });
       } catch (e) {}
@@ -64,26 +64,28 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose }) => {
               <UserPlus size={32} />
             </div>
             <h3 className="text-2xl font-black text-white">دعوت از رفقا</h3>
-            <p className="text-yellow-500 text-[9px] font-black uppercase tracking-[0.4em]">Elite Guest Program</p>
+            <p className="text-yellow-500 text-[9px] font-black tracking-[0.2em]">برنامه دعوت ویژه</p>
           </div>
 
           <div className="space-y-8 relative z-10">
             {/* بخش کد خود کاربر */}
             <div className="space-y-4">
-              <h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest text-center">کد دعوت اختصاصی شما</h4>
+              <h4 className="text-white/40 text-[10px] font-black tracking-widest text-center">کد دعوت اختصاصی شما</h4>
               <div className="glass p-6 rounded-[2.5rem] border-yellow-500/20 flex flex-col items-center gap-4 bg-white/[0.02]">
-                 <span className="text-4xl font-black tracking-[0.3em] text-white font-mono uppercase">{wallet.referralCode || '------'}</span>
+                 <span className="text-4xl font-black tracking-[0.3em] text-white font-mono uppercase ltr-island" dir="ltr">{wallet.referralCode || '------'}</span>
                  <div className="flex gap-3 w-full">
                     <button 
+                      type="button"
                       onClick={handleCopy}
-                      className="flex-1 bg-white/5 py-3 rounded-2xl flex items-center justify-center gap-2 text-white/60 text-[10px] font-black active:scale-95 transition-all"
+                      className="flex-1 min-h-[44px] bg-white/5 py-3 rounded-2xl flex items-center justify-center gap-2 text-white/60 text-[10px] font-black active:scale-95 transition-all"
                     >
                       {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                       {copied ? 'کپی شد' : 'کپی کد'}
                     </button>
                     <button 
+                      type="button"
                       onClick={handleShare}
-                      className="flex-1 bg-yellow-500 py-3 rounded-2xl flex items-center justify-center gap-2 text-black text-[10px] font-black active:scale-95 transition-all"
+                      className="flex-1 min-h-[44px] bg-yellow-500 py-3 rounded-2xl flex items-center justify-center gap-2 text-black text-[10px] font-black active:scale-95 transition-all"
                     >
                       <Share2 size={14} /> اشتراک‌گذاری
                     </button>
@@ -93,23 +95,25 @@ export const ReferralModal: React.FC<ReferralModalProps> = ({ onClose }) => {
 
             <div className="flex items-center gap-4">
                <div className="h-px flex-1 bg-white/5" />
-               <span className="text-white/10 font-black text-[9px] uppercase tracking-widest">OR</span>
+               <span className="text-white/10 font-black text-[9px] tracking-widest">یا</span>
                <div className="h-px flex-1 bg-white/5" />
             </div>
 
             {/* بخش وارد کردن کد معرف */}
             {!wallet.isReferred ? (
               <div className="space-y-4">
-                <h4 className="text-white/40 text-[10px] font-black uppercase tracking-widest text-center">کد معرف داری؟</h4>
+                <h4 className="text-white/40 text-[10px] font-black tracking-widest text-center">کد معرف داری؟</h4>
                 <div className="relative">
                   <input 
                     placeholder="کد دعوت رو اینجا بزن..."
+                    dir="ltr"
                     value={code} onChange={e => setCode(e.target.value.toUpperCase())}
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-center text-white font-mono font-black uppercase outline-none focus:border-yellow-500/40 transition-all"
+                    className="w-full min-h-[52px] bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-center text-white font-mono font-black uppercase outline-none focus:border-yellow-500/40 transition-all ltr-island"
                   />
                   <button 
+                    type="button"
                     onClick={handleClaim} disabled={claiming || !code}
-                    className="w-full mt-3 bg-white text-black py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-30"
+                    className="w-full mt-3 min-h-[44px] bg-white text-black py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-30"
                   >
                     {claiming ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={16} /> ثبت کد و دریافت جایزه</>}
                   </button>
